@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>G-Shape | Google Material Body Maker</title>
+    <title>G-Shape | AI Body Maker</title>
     <!-- Tailwind CSS for modern Google-like UI styling -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Lucide Icons for clean, modern interface elements -->
@@ -39,13 +39,22 @@
             stroke: #6366f1 !important;
             fill: rgba(99, 102, 241, 0.1);
         }
+        /* Custom loading spinner */
+        .loader {
+            border-top-color: #6366f1;
+            animation: spinner 1.5s linear infinite;
+        }
+        @keyframes spinner {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
     </style>
 </head>
 <body class="bg-slate-50 text-slate-900 h-full flex justify-center items-center overflow-hidden">
 
     <div class="w-full h-full max-w-md bg-white shadow-2xl md:rounded-[40px] md:border-[10px] md:border-slate-900 overflow-hidden relative flex flex-col transition-all duration-300">
         
-        <!-- iPhone Notch/StatusBar Simulation (Only visible on desktop size for high fidelity) -->
+        <!-- iPhone Notch/StatusBar Simulation -->
         <div class="hidden md:flex justify-between items-center px-6 py-3 bg-white text-xs text-slate-500 font-medium select-none border-b border-slate-100 shrink-0">
             <span id="statusBarTime">09:41</span>
             <div class="w-20 h-4 bg-black rounded-full absolute left-1/2 transform -translate-x-1/2 top-2"></div>
@@ -56,25 +65,26 @@
             </div>
         </div>
 
+        <!-- Onboarding Screen (Includes Target Days input for backtracking calculations) -->
         <div id="onboardingScreen" class="absolute inset-0 bg-white z-50 flex flex-col justify-between p-6 overflow-y-auto hidden">
             <div class="flex-1 flex flex-col justify-center">
-                <div class="text-center mb-8">
-                    <div class="inline-flex p-4 bg-indigo-50 text-indigo-600 rounded-3xl mb-4">
+                <div class="text-center mb-6">
+                    <div class="inline-flex p-4 bg-indigo-50 text-indigo-600 rounded-3xl mb-3">
                         <i data-lucide="sparkles" class="w-10 h-10 animate-pulse"></i>
                     </div>
                     <h1 class="text-2xl font-bold tracking-tight text-slate-800">理想の身体をデザインしよう</h1>
-                    <p class="text-sm text-slate-500 mt-2">あなたに最適化された減量・増量・PFCバランスを自動算出します</p>
+                    <p class="text-xs text-slate-500 mt-1">AIがあなたの目標期間から逆算したメニューを組み立てます</p>
                 </div>
 
-                <form id="onboardingForm" class="space-y-4">
+                <form id="onboardingForm" class="space-y-3">
                     <div>
                         <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">性別</label>
                         <div class="grid grid-cols-2 gap-3">
-                            <label class="flex items-center justify-center p-3 border-2 border-slate-200 rounded-2xl cursor-pointer hover:bg-slate-50 transition peer-checked:border-indigo-600 peer-checked:bg-indigo-50 relative">
+                            <label class="flex items-center justify-center p-3 border-2 border-slate-200 rounded-2xl cursor-pointer hover:bg-slate-50 transition relative">
                                 <input type="radio" name="gender" value="male" class="sr-only peer" checked>
                                 <span class="text-sm font-medium text-slate-700">男性</span>
                             </label>
-                            <label class="flex items-center justify-center p-3 border-2 border-slate-200 rounded-2xl cursor-pointer hover:bg-slate-50 transition peer-checked:border-indigo-600 peer-checked:bg-indigo-50 relative">
+                            <label class="flex items-center justify-center p-3 border-2 border-slate-200 rounded-2xl cursor-pointer hover:bg-slate-50 transition relative">
                                 <input type="radio" name="gender" value="female" class="sr-only peer">
                                 <span class="text-sm font-medium text-slate-700">女性</span>
                             </label>
@@ -84,33 +94,38 @@
                     <div class="grid grid-cols-2 gap-3">
                         <div>
                             <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">身長 (cm)</label>
-                            <input type="number" id="setupHeight" required min="100" max="250" placeholder="170" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-500 font-medium">
+                            <input type="number" id="setupHeight" required min="100" max="250" placeholder="170" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-500 font-medium text-sm">
                         </div>
                         <div>
                             <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">現在体重 (kg)</label>
-                            <input type="number" id="setupCurrentWeight" required step="0.1" min="30" max="200" placeholder="75.0" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-500 font-medium">
+                            <input type="number" id="setupCurrentWeight" required step="0.1" min="30" max="200" placeholder="75.0" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-500 font-medium text-sm">
                         </div>
                     </div>
 
                     <div class="grid grid-cols-2 gap-3">
                         <div>
                             <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">目標体重 (kg)</label>
-                            <input type="number" id="setupTargetWeight" required step="0.1" min="30" max="200" placeholder="68.0" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-500 font-medium">
+                            <input type="number" id="setupTargetWeight" required step="0.1" min="30" max="200" placeholder="68.0" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-500 font-medium text-sm">
                         </div>
                         <div>
-                            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">アクティビティレベル</label>
-                            <select id="setupActivity" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-500 font-medium text-sm">
-                                <option value="1.2">ほぼ運動しない (デスクワーク)</option>
-                                <option value="1.375" selected>軽い運動 (週1-2回の筋トレ/ランニング)</option>
-                                <option value="1.55">中程度の運動 (週3-5回の激しい運動)</option>
-                                <option value="1.725">激しい運動 (毎日アスリート並み)</option>
-                            </select>
+                            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">目標期間 (日)</label>
+                            <input type="number" id="setupTargetDays" required min="7" max="365" placeholder="60" value="60" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-500 font-medium text-sm">
                         </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">アクティビティレベル</label>
+                        <select id="setupActivity" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-500 font-medium text-xs">
+                            <option value="1.2">ほぼ運動しない (デスクワーク)</option>
+                            <option value="1.375" selected>軽い運動 (週1-2回の筋トレ/ランニング)</option>
+                            <option value="1.55">中程度の運動 (週3-5回の激しい運動)</option>
+                            <option value="1.725">激しい運動 (毎日アスリート並み)</option>
+                        </select>
                     </div>
                 </form>
             </div>
             
-            <button type="button" id="startAppBtn" class="w-full mt-6 py-4 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-2xl transition shadow-lg shadow-indigo-200 flex items-center justify-center space-x-2">
+            <button type="button" id="startAppBtn" class="w-full mt-4 py-4 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-2xl transition shadow-lg shadow-indigo-200 flex items-center justify-center space-x-2">
                 <span>ボディメイクを開始する</span>
                 <i data-lucide="arrow-right" class="w-5 h-5"></i>
             </button>
@@ -118,20 +133,20 @@
 
         <header class="px-5 pt-4 pb-2 bg-white flex justify-between items-center shrink-0 border-b border-slate-100">
             <div>
-                <span class="text-xs text-slate-400 font-medium tracking-wider uppercase">Body Transformation App</span>
-                <h2 class="text-2xl font-bold tracking-tight text-indigo-600 flex items-center gap-1">
-                    G-Shape <i data-lucide="zap" class="w-5 h-5 fill-indigo-100"></i>
+                <span class="text-[10px] text-slate-400 font-medium tracking-wider uppercase" id="headerDaysCountdown">AI Body Design Goal</span>
+                <h2 class="text-xl font-bold tracking-tight text-indigo-600 flex items-center gap-1">
+                    G-Shape <i data-lucide="zap" class="w-4 h-4 fill-indigo-100"></i>
                 </h2>
             </div>
             <div class="flex items-center space-x-2">
                 <!-- AI Coach Status indicator -->
-                <button onclick="showAICoach()" class="p-2 bg-indigo-50 text-indigo-600 rounded-full hover:bg-indigo-100 transition relative">
-                    <i data-lucide="brain-circuit" class="w-5 h-5"></i>
-                    <span class="absolute top-1 right-1 w-2.5 h-2.5 bg-rose-500 rounded-full animate-ping"></span>
-                    <span class="absolute top-1 right-1 w-2.5 h-2.5 bg-rose-500 rounded-full"></span>
+                <button onclick="triggerAICoachGeneration(true)" class="p-2 bg-indigo-50 text-indigo-600 rounded-full hover:bg-indigo-100 transition relative" title="AIメニュー再生成">
+                    <i data-lucide="sparkles" class="w-5 h-5"></i>
+                    <span class="absolute top-1 right-1 w-2.5 h-2.5 bg-emerald-500 rounded-full animate-ping"></span>
+                    <span class="absolute top-1 right-1 w-2.5 h-2.5 bg-emerald-500 rounded-full"></span>
                 </button>
                 <button onclick="switchTab('profile')" class="p-2 bg-slate-100 text-slate-600 rounded-full hover:bg-slate-200 transition">
-                    <i data-lucide="user" class="w-5 h-5"></i>
+                    <i data-lucide="sliders" class="w-5 h-5"></i>
                 </button>
             </div>
         </header>
@@ -140,60 +155,99 @@
 
             <!-- TAB 1: DASHBOARD -->
             <section id="dashboardTab" class="tab-content space-y-4">
+                
+                <!-- AI Loading Screen Overlaid or Skeleton -->
+                <div id="aiLoadingContainer" class="hidden bg-indigo-50/80 rounded-3xl p-6 border border-indigo-100 flex flex-col items-center justify-center text-center space-y-3">
+                    <div class="loader ease-linear rounded-full border-4 border-t-4 border-slate-200 h-10 w-10"></div>
+                    <div>
+                        <p class="text-sm font-bold text-indigo-900">AIが逆算メニューを考案中...</p>
+                        <p class="text-xs text-indigo-600 mt-1">あなたの目標に最適化された食事・運動スケジュールを計算しています</p>
+                    </div>
+                </div>
+
                 <!-- Cool Body Score / Target Card -->
-                <div class="bg-gradient-to-br from-indigo-600 to-violet-700 rounded-3xl p-6 text-white shadow-xl relative overflow-hidden">
+                <div class="bg-gradient-to-br from-indigo-600 to-violet-700 rounded-3xl p-5 text-white shadow-xl relative overflow-hidden">
                     <div class="absolute -right-10 -bottom-10 opacity-10">
-                        <i data-lucide="trending-up" class="w-48 h-48"></i>
+                        <i data-lucide="trending-up" class="w-40 h-40"></i>
                     </div>
                     <div class="flex justify-between items-start">
                         <div>
-                            <p class="text-xs text-indigo-100 font-medium tracking-wide uppercase">かっこいい体度スコア</p>
-                            <h3 class="text-3xl font-extrabold mt-1" id="coolBodyScore">0%</h3>
+                            <p class="text-[10px] text-indigo-100 font-medium tracking-wide uppercase">かっこいい体度スコア</p>
+                            <h3 class="text-2xl font-extrabold mt-0.5" id="coolBodyScore">0%</h3>
                         </div>
-                        <span class="px-3 py-1 bg-white/20 rounded-full text-xs font-semibold backdrop-blur-md" id="scoreDiffText">あと -kg</span>
+                        <span class="px-2.5 py-0.5 bg-white/20 rounded-full text-[10px] font-semibold backdrop-blur-md" id="scoreDiffText">あと -kg</span>
                     </div>
 
                     <!-- Compact Goal Progress Bar -->
-                    <div class="mt-6">
-                        <div class="flex justify-between text-xs text-indigo-200 mb-1 font-medium">
+                    <div class="mt-4">
+                        <div class="flex justify-between text-[10px] text-indigo-200 mb-1 font-medium">
                             <span id="scoreStartWeight">-- kg</span>
+                            <span id="scoreDaysCount">残り -- 日</span>
                             <span>目標: <span id="scoreTargetWeight">-- kg</span></span>
                         </div>
-                        <div class="w-full bg-white/20 h-2.5 rounded-full overflow-hidden">
+                        <div class="w-full bg-white/20 h-2 rounded-full overflow-hidden">
                             <div id="scoreProgressBar" class="bg-white h-full rounded-full transition-all duration-500" style="width: 0%"></div>
+                        </div>
+                        <div class="mt-2 text-[10px] text-indigo-100 text-center font-medium bg-black/10 py-1 rounded-lg" id="scoreCalculatedVelocity">
+                            目標達成には1日あたり平均 --g の調整が必要です
+                        </div>
+                    </div>
+                </div>
+
+                <!-- NEW SECTION: AI Daily Recommended Checklist -->
+                <div class="bg-white rounded-3xl p-4 border border-slate-100 shadow-sm space-y-3">
+                    <div class="flex justify-between items-center">
+                        <h4 class="text-sm font-bold text-slate-800 flex items-center gap-1.5">
+                            <i data-lucide="sparkles" class="w-4 h-4 text-indigo-500 animate-pulse"></i> 逆算AIおすすめの「今日の日課」
+                        </h4>
+                        <span id="checklistProgressText" class="text-[10px] bg-indigo-50 text-indigo-600 px-2 py-0.5 rounded-full font-bold">0 / 0 完了</span>
+                    </div>
+                    <p class="text-[11px] text-slate-400 leading-relaxed">できた項目にチェックを入れるだけで、本日の食事カロリーや運動量が自動で蓄積・登録されます！</p>
+                    
+                    <!-- Task Checklist Container -->
+                    <div class="space-y-2.5" id="aiChecklistContainer">
+                        <!-- Instantiated by JS -->
+                    </div>
+
+                    <!-- AI Special Coach Advice Summary inside Home -->
+                    <div class="p-3 bg-slate-50 rounded-2xl border border-slate-100 text-[11px] text-slate-600 leading-relaxed flex items-start gap-2">
+                        <i data-lucide="brain-circuit" class="w-4 h-4 text-indigo-500 shrink-0 mt-0.5"></i>
+                        <div>
+                            <span class="font-bold text-slate-700">AIコーチより：</span>
+                            <span id="aiDashboardAdvice">ロード中または準備中です...</span>
                         </div>
                     </div>
                 </div>
 
                 <!-- Calories & Nutrients Panel -->
-                <div class="bg-white rounded-3xl p-5 border border-slate-100 shadow-sm space-y-4">
+                <div class="bg-white rounded-3xl p-4 border border-slate-100 shadow-sm space-y-3">
                     <h4 class="text-sm font-bold text-slate-800 flex items-center gap-1.5">
                         <i data-lucide="apple" class="w-4 h-4 text-emerald-500"></i> 今日のエネルギー・栄養収支
                     </h4>
 
                     <!-- Main Calorie Progress Ring / Balance representation -->
-                    <div class="grid grid-cols-3 gap-2 text-center py-2 bg-slate-50 rounded-2xl p-3">
+                    <div class="grid grid-cols-3 gap-2 text-center py-2 bg-slate-50 rounded-2xl p-2.5">
                         <div>
-                            <p class="text-[10px] text-slate-400 font-bold uppercase">目標摂取</p>
-                            <p class="text-lg font-extrabold text-slate-700" id="dashTargetCal">0</p>
-                            <span class="text-[10px] text-slate-400">kcal</span>
+                            <p class="text-[9px] text-slate-400 font-bold uppercase">目標摂取</p>
+                            <p class="text-base font-extrabold text-slate-700" id="dashTargetCal">0</p>
+                            <span class="text-[9px] text-slate-400">kcal</span>
                         </div>
                         <div class="border-x border-slate-200 flex flex-col justify-center">
-                            <p class="text-[10px] text-indigo-600 font-bold uppercase">現在</p>
-                            <p class="text-xl font-black text-indigo-600" id="dashCurrentCal">0</p>
-                            <span class="text-[10px] text-indigo-400">kcal</span>
+                            <p class="text-[9px] text-indigo-600 font-bold uppercase">現在</p>
+                            <p class="text-lg font-black text-indigo-600" id="dashCurrentCal">0</p>
+                            <span class="text-[9px] text-indigo-400">kcal</span>
                         </div>
                         <div>
-                            <p class="text-[10px] text-slate-400 font-bold uppercase">消費 (運動)</p>
-                            <p class="text-lg font-extrabold text-rose-500" id="dashBurnedCal">0</p>
-                            <span class="text-[10px] text-slate-400">kcal</span>
+                            <p class="text-[9px] text-slate-400 font-bold uppercase">消費 (運動)</p>
+                            <p class="text-base font-extrabold text-rose-500" id="dashBurnedCal">0</p>
+                            <span class="text-[9px] text-slate-400">kcal</span>
                         </div>
                     </div>
 
                     <!-- Target Calorie Status bar -->
                     <div class="space-y-1">
-                        <div class="flex justify-between text-xs text-slate-500 font-semibold">
-                            <span>摂取カロリー進捗</span>
+                        <div class="flex justify-between text-[11px] text-slate-500 font-semibold">
+                            <span>カロリー制限・進捗</span>
                             <span id="dashCalPercent">0%</span>
                         </div>
                         <div class="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
@@ -202,119 +256,97 @@
                     </div>
 
                     <!-- Dynamic PFC Balance Visualizers -->
-                    <div class="grid grid-cols-3 gap-3 pt-2">
+                    <div class="grid grid-cols-3 gap-2 pt-1">
                         <!-- Protein (P) -->
-                        <div class="bg-slate-50/50 p-2.5 rounded-2xl border border-slate-100">
-                            <div class="flex items-center justify-between">
-                                <span class="text-xs font-bold text-slate-600">P (タンパク質)</span>
-                            </div>
-                            <p class="text-sm font-extrabold mt-1 text-indigo-600"><span id="pfcProt">0</span>g <span class="text-[10px] text-slate-400">/ <span id="targetProt">0</span>g</span></p>
-                            <div class="w-full bg-slate-100 h-1.5 rounded-full mt-1.5 overflow-hidden">
+                        <div class="bg-slate-50/50 p-2 rounded-xl border border-slate-100 text-center">
+                            <span class="text-[10px] font-bold text-slate-500">P (タンパク質)</span>
+                            <p class="text-xs font-extrabold mt-0.5 text-indigo-600"><span id="pfcProt">0</span>g<br><span class="text-[9px] text-slate-400">/ <span id="targetProt">0</span>g</span></p>
+                            <div class="w-full bg-slate-100 h-1 rounded-full mt-1 overflow-hidden">
                                 <div id="pfcProtBar" class="bg-indigo-500 h-full rounded-full transition-all" style="width: 0%"></div>
                             </div>
                         </div>
                         <!-- Fat (F) -->
-                        <div class="bg-slate-50/50 p-2.5 rounded-2xl border border-slate-100">
-                            <div class="flex items-center justify-between">
-                                <span class="text-xs font-bold text-slate-600">F (脂質)</span>
-                            </div>
-                            <p class="text-sm font-extrabold mt-1 text-amber-600"><span id="pfcFat">0</span>g <span class="text-[10px] text-slate-400">/ <span id="targetFat">0</span>g</span></p>
-                            <div class="w-full bg-slate-100 h-1.5 rounded-full mt-1.5 overflow-hidden">
+                        <div class="bg-slate-50/50 p-2 rounded-xl border border-slate-100 text-center">
+                            <span class="text-[10px] font-bold text-slate-500">F (脂質)</span>
+                            <p class="text-xs font-extrabold mt-0.5 text-amber-600"><span id="pfcFat">0</span>g<br><span class="text-[9px] text-slate-400">/ <span id="targetFat">0</span>g</span></p>
+                            <div class="w-full bg-slate-100 h-1 rounded-full mt-1 overflow-hidden">
                                 <div id="pfcFatBar" class="bg-amber-500 h-full rounded-full transition-all" style="width: 0%"></div>
                             </div>
                         </div>
                         <!-- Carbs (C) -->
-                        <div class="bg-slate-50/50 p-2.5 rounded-2xl border border-slate-100">
-                            <div class="flex items-center justify-between">
-                                <span class="text-xs font-bold text-slate-600">C (炭水化物)</span>
-                            </div>
-                            <p class="text-sm font-extrabold mt-1 text-teal-600"><span id="pfcCarb">0</span>g <span class="text-[10px] text-slate-400">/ <span id="targetCarb">0</span>g</span></p>
-                            <div class="w-full bg-slate-100 h-1.5 rounded-full mt-1.5 overflow-hidden">
+                        <div class="bg-slate-50/50 p-2 rounded-xl border border-slate-100 text-center">
+                            <span class="text-[10px] font-bold text-slate-500">C (炭水化物)</span>
+                            <p class="text-xs font-extrabold mt-0.5 text-teal-600"><span id="pfcCarb">0</span>g<br><span class="text-[9px] text-slate-400">/ <span id="targetCarb">0</span>g</span></p>
+                            <div class="w-full bg-slate-100 h-1 rounded-full mt-1 overflow-hidden">
                                 <div id="pfcCarbBar" class="bg-teal-500 h-full rounded-full transition-all" style="width: 0%"></div>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <div class="space-y-3">
-                    <h4 class="text-sm font-bold text-slate-500 tracking-wider uppercase flex items-center gap-1">
-                        <i data-lucide="check-square" class="w-4 h-4"></i> 今日のアクティビティ
+                <!-- Today's Manual Log Stats -->
+                <div class="space-y-2">
+                    <h4 class="text-xs font-bold text-slate-500 tracking-wider uppercase flex items-center gap-1">
+                        <i data-lucide="check-square" class="w-3.5 h-3.5"></i> その他の個別ログ
                     </h4>
 
-                    <!-- Weight Log card -->
-                    <div class="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm flex justify-between items-center">
-                        <div class="flex items-center space-x-3">
-                            <span class="p-2.5 bg-rose-50 text-rose-600 rounded-xl">
-                                <i data-lucide="scale" class="w-5 h-5"></i>
+                    <div class="grid grid-cols-3 gap-2">
+                        <!-- Weight Log card -->
+                        <div class="bg-white rounded-2xl p-3 border border-slate-100 shadow-sm text-center">
+                            <span class="p-1.5 bg-rose-50 text-rose-600 rounded-lg inline-block mb-1">
+                                <i data-lucide="scale" class="w-4 h-4"></i>
                             </span>
-                            <div>
-                                <p class="text-xs text-slate-400 font-bold uppercase">本日の体重</p>
-                                <p class="text-lg font-bold text-slate-800" id="dashWeightVal">未記録</p>
-                            </div>
+                            <p class="text-[9px] text-slate-400 font-bold uppercase">今日の体重</p>
+                            <p class="text-xs font-bold text-slate-800 mt-0.5" id="dashWeightVal">未記録</p>
                         </div>
-                        <button onclick="openRecordModal('weight')" class="p-2 bg-slate-50 text-slate-600 rounded-full hover:bg-slate-100 transition">
-                            <i data-lucide="plus" class="w-5 h-5"></i>
-                        </button>
-                    </div>
 
-                    <!-- Workout Log card -->
-                    <div class="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm flex justify-between items-center">
-                        <div class="flex items-center space-x-3">
-                            <span class="p-2.5 bg-indigo-50 text-indigo-600 rounded-xl">
-                                <i data-lucide="dumbbell" class="w-5 h-5"></i>
+                        <!-- Workout Log card -->
+                        <div class="bg-white rounded-2xl p-3 border border-slate-100 shadow-sm text-center">
+                            <span class="p-1.5 bg-indigo-50 text-indigo-600 rounded-lg inline-block mb-1">
+                                <i data-lucide="dumbbell" class="w-4 h-4"></i>
                             </span>
-                            <div>
-                                <p class="text-xs text-slate-400 font-bold uppercase">筋トレ記録</p>
-                                <p class="text-sm font-bold text-slate-800" id="dashWorkoutVal">今日はまだ筋トレを行っていません</p>
-                            </div>
+                            <p class="text-[9px] text-slate-400 font-bold uppercase">筋トレ部位</p>
+                            <p class="text-xs font-bold text-slate-800 mt-0.5 truncate" id="dashWorkoutVal">未実施</p>
                         </div>
-                        <button onclick="openRecordModal('workout')" class="p-2 bg-slate-50 text-slate-600 rounded-full hover:bg-slate-100 transition">
-                            <i data-lucide="plus" class="w-5 h-5"></i>
-                        </button>
-                    </div>
 
-                    <!-- Running Log card -->
-                    <div class="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm flex justify-between items-center">
-                        <div class="flex items-center space-x-3">
-                            <span class="p-2.5 bg-sky-50 text-sky-600 rounded-xl">
-                                <i data-lucide="activity" class="w-5 h-5"></i>
+                        <!-- Running Log card -->
+                        <div class="bg-white rounded-2xl p-3 border border-slate-100 shadow-sm text-center">
+                            <span class="p-1.5 bg-sky-50 text-sky-600 rounded-lg inline-block mb-1">
+                                <i data-lucide="activity" class="w-4 h-4"></i>
                             </span>
-                            <div>
-                                <p class="text-xs text-slate-400 font-bold uppercase">有酸素・ランニング</p>
-                                <p class="text-sm font-bold text-slate-800" id="dashRunningVal">今日はまだ走っていません</p>
-                            </div>
+                            <p class="text-[9px] text-slate-400 font-bold uppercase">有酸素・ラン</p>
+                            <p class="text-xs font-bold text-slate-800 mt-0.5 truncate" id="dashRunningVal">未実施</p>
                         </div>
-                        <button onclick="openRecordModal('running')" class="p-2 bg-slate-50 text-slate-600 rounded-full hover:bg-slate-100 transition">
-                            <i data-lucide="plus" class="w-5 h-5"></i>
-                        </button>
                     </div>
                 </div>
             </section>
 
+            <!-- TAB 2: ANALYTICS -->
             <section id="analyticsTab" class="tab-content hidden space-y-4">
-                <div class="bg-white rounded-3xl p-5 border border-slate-100 shadow-sm space-y-4">
-                    <h3 class="text-lg font-bold text-slate-800">体重推移トレンド</h3>
-                    <div class="relative w-full h-64">
+                <div class="bg-white rounded-3xl p-4 border border-slate-100 shadow-sm space-y-4">
+                    <h3 class="text-sm font-bold text-slate-800">体重推移トレンド</h3>
+                    <div class="relative w-full h-56">
                         <canvas id="weightChart"></canvas>
                     </div>
-                    <div class="text-center text-xs text-slate-400">
-                        ※ 現在体重から目標体重（赤点線）へのスムーズなアプローチを描きます
+                    <div class="text-center text-[10px] text-slate-400">
+                        ※ 赤破線は設定した目標期間内の理想アプローチラインです
                     </div>
                 </div>
 
-                <div class="bg-white rounded-3xl p-5 border border-slate-100 shadow-sm space-y-4">
-                    <h3 class="text-lg font-bold text-slate-800">カロリーバランス (直近7日間)</h3>
-                    <div class="relative w-full h-64">
+                <div class="bg-white rounded-3xl p-4 border border-slate-100 shadow-sm space-y-4">
+                    <h3 class="text-sm font-bold text-slate-800">カロリーバランス (直近7日間)</h3>
+                    <div class="relative w-full h-56">
                         <canvas id="calorieChart"></canvas>
                     </div>
                 </div>
             </section>
 
+            <!-- TAB 3: HISTORY -->
             <section id="historyTab" class="tab-content hidden space-y-4">
                 <div class="flex justify-between items-center">
-                    <h3 class="text-lg font-bold text-slate-800">記録ログ一覧</h3>
-                    <button onclick="clearAllData()" class="text-xs text-rose-500 hover:text-rose-600 font-semibold flex items-center gap-1">
-                        <i data-lucide="trash-2" class="w-4 h-4"></i> データをすべてリセット
+                    <h3 class="text-sm font-bold text-slate-800">記録ログ一覧</h3>
+                    <button onclick="clearAllData()" class="text-[10px] text-rose-500 hover:text-rose-600 font-semibold flex items-center gap-1">
+                        <i data-lucide="trash-2" class="w-3.5 h-3.5"></i> データをすべてリセット
                     </button>
                 </div>
                 <div id="historyList" class="space-y-3">
@@ -322,15 +354,16 @@
                 </div>
             </section>
 
+            <!-- TAB 4: PROFILE/TARGET MODIFICATION -->
             <section id="profileTab" class="tab-content hidden space-y-4">
-                <div class="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm space-y-6">
+                <div class="bg-white rounded-3xl p-5 border border-slate-100 shadow-sm space-y-5">
                     <div class="flex items-center space-x-4">
-                        <div class="p-4 bg-indigo-50 text-indigo-600 rounded-3xl">
-                            <i data-lucide="sparkles" class="w-8 h-8"></i>
+                        <div class="p-3 bg-indigo-50 text-indigo-600 rounded-2xl">
+                            <i data-lucide="sparkles" class="w-7 h-7"></i>
                         </div>
                         <div>
-                            <h3 class="text-lg font-bold text-slate-800" id="profileTitle">ボディメイク挑戦者</h3>
-                            <p class="text-sm text-slate-400" id="profileBmi">BMI: -- (適正)</p>
+                            <h3 class="text-base font-bold text-slate-800" id="profileTitle">AIボディメーカー</h3>
+                            <p class="text-xs text-slate-400" id="profileBmi">BMI: --</p>
                         </div>
                     </div>
 
@@ -340,47 +373,58 @@
                         <div class="grid grid-cols-2 gap-3">
                             <div>
                                 <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">現在の身長 (cm)</label>
-                                <input type="number" id="profileHeight" required class="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-500 font-bold">
+                                <input type="number" id="profileHeight" required class="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-500 font-bold text-sm">
                             </div>
                             <div>
                                 <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">設定初期体重 (kg)</label>
-                                <input type="number" id="profileStartWeight" required step="0.1" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-500 font-bold">
+                                <input type="number" id="profileStartWeight" required step="0.1" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-500 font-bold text-sm">
                             </div>
                         </div>
 
                         <div class="grid grid-cols-2 gap-3">
                             <div>
                                 <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">目標体重 (kg)</label>
-                                <input type="number" id="profileTargetWeight" required step="0.1" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-500 font-bold">
+                                <input type="number" id="profileTargetWeight" required step="0.1" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-500 font-bold text-sm">
                             </div>
                             <div>
-                                <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">運動頻度マルチプライヤー</label>
-                                <select id="profileActivity" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-500 font-bold text-sm">
-                                    <option value="1.2">ほぼ運動しない (1.2)</option>
-                                    <option value="1.375">軽い運動 (1.375)</option>
-                                    <option value="1.55">中度の運動 (1.55)</option>
-                                    <option value="1.725">激しい運動 (1.725)</option>
-                                </select>
+                                <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">目標達成期間 (日)</label>
+                                <input type="number" id="profileTargetDays" required min="7" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-500 font-bold text-sm">
                             </div>
                         </div>
 
+                        <div>
+                            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">運動頻度マルチプライヤー</label>
+                            <select id="profileActivity" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-500 font-bold text-xs">
+                                <option value="1.2">ほぼ運動しない (1.2)</option>
+                                <option value="1.375">軽い運動 (1.375)</option>
+                                <option value="1.55">中度の運動 (1.55)</option>
+                                <option value="1.725">激しい運動 (1.725)</option>
+                            </select>
+                        </div>
+
                         <!-- System metrics -->
-                        <div class="p-4 bg-slate-50 rounded-2xl space-y-2">
-                            <div class="flex justify-between text-xs font-medium text-slate-500">
+                        <div class="p-4 bg-slate-50 rounded-2xl space-y-2 text-xs">
+                            <div class="flex justify-between font-medium text-slate-500">
                                 <span>基礎代謝量 (BMR)</span>
                                 <span class="font-bold text-slate-800" id="profileBmrText">-- kcal</span>
                             </div>
-                            <div class="flex justify-between text-xs font-medium text-slate-500">
+                            <div class="flex justify-between font-medium text-slate-500">
                                 <span>1日総消費カロリー (TDEE)</span>
                                 <span class="font-bold text-indigo-600" id="profileTdeeText">-- kcal</span>
                             </div>
-                            <div class="flex justify-between text-xs font-medium text-slate-500">
-                                <span>かっこいい体づくり目標カロリー</span>
+                            <div class="flex justify-between font-medium text-slate-500">
+                                <span>推奨摂取目標カロリー</span>
                                 <span class="font-bold text-emerald-600" id="profileTargetCalText">-- kcal</span>
                             </div>
                         </div>
 
-                        <button type="submit" class="w-full py-3.5 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-2xl transition shadow-lg shadow-indigo-100">
+                        <!-- Button to regenerate AI advice -->
+                        <button type="button" onclick="triggerAICoachGeneration(true)" class="w-full py-2.5 bg-violet-50 text-violet-700 hover:bg-violet-100 font-bold rounded-2xl transition flex items-center justify-center gap-2 text-xs">
+                            <i data-lucide="sparkles" class="w-4 h-4"></i>
+                            目標からAI逆算メニューを再作成
+                        </button>
+
+                        <button type="submit" class="w-full py-3.5 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-2xl transition shadow-lg shadow-indigo-100 text-sm">
                             プロフィール設定を更新
                         </button>
                     </form>
@@ -389,51 +433,51 @@
         </main>
 
         <!-- Floating Action Button (FAB) for Material UI actions -->
-        <button id="fabBtn" class="absolute bottom-20 right-5 z-40 p-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-3xl shadow-lg hover:shadow-indigo-300 transition-all transform hover:scale-105 active:scale-95 duration-200">
-            <i data-lucide="plus" class="w-7 h-7"></i>
+        <button id="fabBtn" class="absolute bottom-20 right-5 z-40 p-3.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl shadow-lg hover:shadow-indigo-300 transition-all transform hover:scale-105 active:scale-95 duration-200">
+            <i data-lucide="plus" class="w-6 h-6"></i>
         </button>
 
         <!-- FAB Options Modal Sheet (Bottom Drawer layout) -->
         <div id="fabSheet" class="absolute inset-0 bg-black/40 z-40 flex items-end justify-center opacity-0 pointer-events-none transition-all duration-300">
             <div id="fabSheetContent" class="w-full bg-white rounded-t-[32px] p-6 pb-8 space-y-4 transform translate-y-full transition-transform duration-300 shadow-2xl">
                 <div class="flex justify-between items-center">
-                    <h3 class="text-lg font-bold text-slate-800">何を追加しますか？</h3>
-                    <button onclick="closeFAB()" class="p-2 bg-slate-100 hover:bg-slate-200 rounded-full text-slate-600">
-                        <i data-lucide="x" class="w-5 h-5"></i>
+                    <h3 class="text-sm font-bold text-slate-800">個別記録を追加</h3>
+                    <button onclick="closeFAB()" class="p-1.5 bg-slate-100 hover:bg-slate-200 rounded-full text-slate-600">
+                        <i data-lucide="x" class="w-4 h-4"></i>
                     </button>
                 </div>
 
-                <div class="grid grid-cols-2 gap-4">
-                    <button onclick="openRecordModal('diet')" class="p-4 bg-emerald-50 hover:bg-emerald-100 rounded-2xl text-left border border-emerald-100 transition">
-                        <span class="p-2 bg-emerald-500 text-white rounded-xl inline-block mb-3">
-                            <i data-lucide="apple" class="w-5 h-5"></i>
+                <div class="grid grid-cols-2 gap-3">
+                    <button onclick="openRecordModal('diet')" class="p-3 bg-emerald-50 hover:bg-emerald-100 rounded-2xl text-left border border-emerald-100 transition">
+                        <span class="p-2 bg-emerald-500 text-white rounded-xl inline-block mb-2">
+                            <i data-lucide="apple" class="w-4 h-4"></i>
                         </span>
-                        <h4 class="font-bold text-emerald-900 text-sm">食事を記録</h4>
-                        <p class="text-xs text-emerald-600 mt-1">PFCバランスとカロリーの入力</p>
+                        <h4 class="font-bold text-emerald-900 text-xs">食事を記録</h4>
+                        <p class="text-[10px] text-emerald-600 mt-0.5">PFCやカロリーを手動記録</p>
                     </button>
 
-                    <button onclick="openRecordModal('workout')" class="p-4 bg-indigo-50 hover:bg-indigo-100 rounded-2xl text-left border border-indigo-100 transition">
-                        <span class="p-2 bg-indigo-500 text-white rounded-xl inline-block mb-3">
-                            <i data-lucide="dumbbell" class="w-5 h-5"></i>
+                    <button onclick="openRecordModal('workout')" class="p-3 bg-indigo-50 hover:bg-indigo-100 rounded-2xl text-left border border-indigo-100 transition">
+                        <span class="p-2 bg-indigo-500 text-white rounded-xl inline-block mb-2">
+                            <i data-lucide="dumbbell" class="w-4 h-4"></i>
                         </span>
-                        <h4 class="font-bold text-indigo-900 text-sm">筋トレを記録</h4>
-                        <p class="text-xs text-indigo-600 mt-1">部位や種目、重量・回数の管理</p>
+                        <h4 class="font-bold text-indigo-900 text-xs">筋トレを記録</h4>
+                        <p class="text-[10px] text-indigo-600 mt-0.5">種目、重量・回数管理</p>
                     </button>
 
-                    <button onclick="openRecordModal('running')" class="p-4 bg-sky-50 hover:bg-sky-100 rounded-2xl text-left border border-sky-100 transition">
-                        <span class="p-2 bg-sky-500 text-white rounded-xl inline-block mb-3">
-                            <i data-lucide="activity" class="w-5 h-5"></i>
+                    <button onclick="openRecordModal('running')" class="p-3 bg-sky-50 hover:bg-sky-100 rounded-2xl text-left border border-sky-100 transition">
+                        <span class="p-2 bg-sky-500 text-white rounded-xl inline-block mb-2">
+                            <i data-lucide="activity" class="w-4 h-4"></i>
                         </span>
-                        <h4 class="font-bold text-sky-900 text-sm">有酸素・ラン</h4>
-                        <p class="text-xs text-sky-600 mt-1">走行距離や消費カロリーの蓄積</p>
+                        <h4 class="font-bold text-sky-900 text-xs">有酸素・ラン</h4>
+                        <p class="text-[10px] text-sky-600 mt-0.5">距離や走行による燃焼記録</p>
                     </button>
 
-                    <button onclick="openRecordModal('weight')" class="p-4 bg-rose-50 hover:bg-rose-100 rounded-2xl text-left border border-rose-100 transition">
-                        <span class="p-2 bg-rose-500 text-white rounded-xl inline-block mb-3">
-                            <i data-lucide="scale" class="w-5 h-5"></i>
+                    <button onclick="openRecordModal('weight')" class="p-3 bg-rose-50 hover:bg-rose-100 rounded-2xl text-left border border-rose-100 transition">
+                        <span class="p-2 bg-rose-500 text-white rounded-xl inline-block mb-2">
+                            <i data-lucide="scale" class="w-4 h-4"></i>
                         </span>
-                        <h4 class="font-bold text-rose-900 text-sm">体重を測定</h4>
-                        <p class="text-xs text-rose-600 mt-1">デイリー体重と体脂肪率の管理</p>
+                        <h4 class="font-bold text-rose-900 text-xs">体重を測定</h4>
+                        <p class="text-[10px] text-rose-600 mt-0.5">今日の体重と体脂肪率</p>
                     </button>
                 </div>
             </div>
@@ -442,102 +486,91 @@
         <div id="recordModal" class="absolute inset-0 bg-black/50 z-50 flex justify-center items-end hidden">
             <div class="w-full bg-white rounded-t-[32px] max-h-[85%] overflow-y-auto p-6 pb-8 space-y-4 shadow-2xl">
                 <div class="flex justify-between items-center">
-                    <h3 class="text-lg font-bold text-slate-800" id="modalTitle">記録</h3>
+                    <h3 class="text-sm font-bold text-slate-800" id="modalTitle">記録</h3>
                     <button onclick="closeRecordModal()" class="p-1.5 bg-slate-100 rounded-full text-slate-500 hover:bg-slate-200">
-                        <i data-lucide="x" class="w-5 h-5"></i>
+                        <i data-lucide="x" class="w-4 h-4"></i>
                     </button>
                 </div>
 
                 <!-- 1. DIET FORM -->
                 <form id="dietForm" class="hidden space-y-4">
-                    <!-- Quick meals template selectors -->
                     <div>
-                        <span class="block text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1.5">定番メニューからクイック追加</span>
+                        <span class="block text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1.5">定番メニューから追加</span>
                         <div class="flex gap-2 overflow-x-auto pb-1">
                             <button type="button" onclick="quickFillMeal('chicken')" class="flex-none px-3 py-1.5 bg-slate-100 hover:bg-indigo-50 hover:text-indigo-600 rounded-full text-xs font-semibold text-slate-600 transition">🐔 鶏胸肉と白米</button>
                             <button type="button" onclick="quickFillMeal('protein')" class="flex-none px-3 py-1.5 bg-slate-100 hover:bg-indigo-50 hover:text-indigo-600 rounded-full text-xs font-semibold text-slate-600 transition">🥤 プロテイン</button>
                             <button type="button" onclick="quickFillMeal('salad')" class="flex-none px-3 py-1.5 bg-slate-100 hover:bg-indigo-50 hover:text-indigo-600 rounded-full text-xs font-semibold text-slate-600 transition">🥗 サラダチキン飯</button>
-                            <button type="button" onclick="quickFillMeal('cheat')" class="flex-none px-3 py-1.5 bg-slate-100 hover:bg-indigo-50 hover:text-indigo-600 rounded-full text-xs font-semibold text-slate-600 transition">🍕 チート気味ピザ</button>
                         </div>
                     </div>
 
                     <div>
-                        <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1">食事の名前 / タイトル</label>
-                        <input type="text" id="dietName" required placeholder="例: 鶏胸肉と玄米弁当" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-500 font-semibold">
+                        <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1">食事名</label>
+                        <input type="text" id="dietName" required placeholder="例: 鶏胸肉と玄米" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-500 font-semibold text-sm">
                     </div>
 
                     <div class="grid grid-cols-2 gap-3">
                         <div>
                             <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1">カロリー (kcal)</label>
-                            <input type="number" id="dietCal" required placeholder="550" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-500 font-bold">
+                            <input type="number" id="dietCal" required placeholder="500" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-500 font-bold text-sm">
                         </div>
                         <div>
                             <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1">タンパク質 (P) g</label>
-                            <input type="number" id="dietProt" required placeholder="35" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-500 font-bold">
+                            <input type="number" id="dietProt" required placeholder="30" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-500 font-bold text-sm">
                         </div>
                     </div>
 
                     <div class="grid grid-cols-2 gap-3">
                         <div>
                             <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1">脂質 (F) g</label>
-                            <input type="number" id="dietFat" required placeholder="12" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-500 font-bold">
+                            <input type="number" id="dietFat" required placeholder="10" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-500 font-bold text-sm">
                         </div>
                         <div>
                             <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1">炭水化物 (C) g</label>
-                            <input type="number" id="dietCarb" required placeholder="65" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-500 font-bold">
+                            <input type="number" id="dietCarb" required placeholder="60" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-500 font-bold text-sm">
                         </div>
                     </div>
 
-                    <button type="submit" class="w-full py-3.5 bg-emerald-600 text-white font-bold rounded-2xl shadow-lg shadow-emerald-100">食事データを登録</button>
+                    <button type="submit" class="w-full py-3.5 bg-emerald-600 text-white font-bold rounded-2xl shadow-lg shadow-emerald-100 text-sm">食事を登録</button>
                 </form>
 
                 <!-- 2. WORKOUT FORM -->
                 <form id="workoutForm" class="hidden space-y-4">
                     <div>
-                        <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1.5">筋トレ部位を選択</label>
+                        <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1.5">筋トレ部位</label>
                         <div class="grid grid-cols-3 gap-2">
-                            <label class="flex justify-center p-2.5 border-2 border-slate-200 rounded-xl cursor-pointer hover:bg-indigo-50 peer-checked:border-indigo-600 select-none text-xs font-bold text-slate-700">
-                                <input type="radio" name="musclePart" value="胸" class="sr-only" checked>  Chest (胸)
+                            <label class="flex justify-center p-2 border-2 border-slate-200 rounded-xl cursor-pointer hover:bg-indigo-50 select-none text-xs font-bold text-slate-700">
+                                <input type="radio" name="musclePart" value="胸" class="sr-only" checked>胸 (Chest)
                             </label>
-                            <label class="flex justify-center p-2.5 border-2 border-slate-200 rounded-xl cursor-pointer hover:bg-indigo-50 peer-checked:border-indigo-600 select-none text-xs font-bold text-slate-700">
-                                <input type="radio" name="musclePart" value="背中" class="sr-only"> Back (背中)
+                            <label class="flex justify-center p-2 border-2 border-slate-200 rounded-xl cursor-pointer hover:bg-indigo-50 select-none text-xs font-bold text-slate-700">
+                                <input type="radio" name="musclePart" value="背中" class="sr-only">背中 (Back)
                             </label>
-                            <label class="flex justify-center p-2.5 border-2 border-slate-200 rounded-xl cursor-pointer hover:bg-indigo-50 peer-checked:border-indigo-600 select-none text-xs font-bold text-slate-700">
-                                <input type="radio" name="musclePart" value="脚" class="sr-only"> Legs (脚)
-                            </label>
-                            <label class="flex justify-center p-2.5 border-2 border-slate-200 rounded-xl cursor-pointer hover:bg-indigo-50 peer-checked:border-indigo-600 select-none text-xs font-bold text-slate-700">
-                                <input type="radio" name="musclePart" value="肩" class="sr-only"> Shoulders (肩)
-                            </label>
-                            <label class="flex justify-center p-2.5 border-2 border-slate-200 rounded-xl cursor-pointer hover:bg-indigo-50 peer-checked:border-indigo-600 select-none text-xs font-bold text-slate-700">
-                                <input type="radio" name="musclePart" value="腕" class="sr-only"> Arms (腕)
-                            </label>
-                            <label class="flex justify-center p-2.5 border-2 border-slate-200 rounded-xl cursor-pointer hover:bg-indigo-50 peer-checked:border-indigo-600 select-none text-xs font-bold text-slate-700">
-                                <input type="radio" name="musclePart" value="腹筋" class="sr-only"> Core (腹)
+                            <label class="flex justify-center p-2 border-2 border-slate-200 rounded-xl cursor-pointer hover:bg-indigo-50 select-none text-xs font-bold text-slate-700">
+                                <input type="radio" name="musclePart" value="脚" class="sr-only">脚 (Legs)
                             </label>
                         </div>
                     </div>
 
                     <div>
                         <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1">種目名</label>
-                        <input type="text" id="workoutName" required placeholder="例: ベンチプレス" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-500 font-semibold">
+                        <input type="text" id="workoutName" required placeholder="例: ベンチプレス" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-500 font-semibold text-sm">
                     </div>
 
                     <div class="grid grid-cols-3 gap-2">
                         <div>
                             <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1">重量 (kg)</label>
-                            <input type="number" id="workoutWeight" step="0.5" required placeholder="60" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-500 font-bold">
+                            <input type="number" id="workoutWeight" step="0.5" required placeholder="60" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-500 font-bold text-sm">
                         </div>
                         <div>
-                            <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1">レップ数 (回)</label>
-                            <input type="number" id="workoutReps" required placeholder="10" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-500 font-bold">
+                            <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1">レップ数</label>
+                            <input type="number" id="workoutReps" required placeholder="10" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-500 font-bold text-sm">
                         </div>
                         <div>
                             <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1">セット数</label>
-                            <input type="number" id="workoutSets" required placeholder="3" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-500 font-bold">
+                            <input type="number" id="workoutSets" required placeholder="3" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-500 font-bold text-sm">
                         </div>
                     </div>
 
-                    <button type="submit" class="w-full py-3.5 bg-indigo-600 text-white font-bold rounded-2xl shadow-lg shadow-indigo-100">筋トレデータを登録</button>
+                    <button type="submit" class="w-full py-3.5 bg-indigo-600 text-white font-bold rounded-2xl shadow-lg shadow-indigo-100 text-sm">筋トレデータを登録</button>
                 </form>
 
                 <!-- 3. RUNNING FORM -->
@@ -545,20 +578,20 @@
                     <div class="grid grid-cols-2 gap-3">
                         <div>
                             <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1">距離 (km)</label>
-                            <input type="number" id="runDistance" step="0.01" required placeholder="5.00" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-500 font-bold">
+                            <input type="number" id="runDistance" step="0.01" required placeholder="5.00" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-500 font-bold text-sm">
                         </div>
                         <div>
                             <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1">時間 (分)</label>
-                            <input type="number" id="runDuration" required placeholder="30" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-500 font-bold">
+                            <input type="number" id="runDuration" required placeholder="30" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-500 font-bold text-sm">
                         </div>
                     </div>
 
                     <div class="p-4 bg-sky-50 rounded-2xl flex justify-between items-center">
                         <span class="text-xs font-bold text-sky-800">推定消費カロリー</span>
-                        <span class="text-lg font-black text-sky-600" id="estimatedRunCal">-- kcal</span>
+                        <span class="text-base font-black text-sky-600" id="estimatedRunCal">-- kcal</span>
                     </div>
 
-                    <button type="submit" class="w-full py-3.5 bg-sky-600 text-white font-bold rounded-2xl shadow-lg shadow-sky-100">ランニングデータを登録</button>
+                    <button type="submit" class="w-full py-3.5 bg-sky-600 text-white font-bold rounded-2xl shadow-lg shadow-sky-100 text-sm">ランニングデータを登録</button>
                 </form>
 
                 <!-- 4. WEIGHT FORM -->
@@ -566,67 +599,42 @@
                     <div class="grid grid-cols-2 gap-3">
                         <div>
                             <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1">今日の体重 (kg)</label>
-                            <input type="number" id="logWeightVal" step="0.1" required placeholder="72.4" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-500 font-bold">
+                            <input type="number" id="logWeightVal" step="0.1" required placeholder="72.4" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-500 font-bold text-sm">
                         </div>
                         <div>
                             <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1">体脂肪率 (%)</label>
-                            <input type="number" id="logWeightFat" step="0.1" placeholder="18.5" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-500 font-bold">
+                            <input type="number" id="logWeightFat" step="0.1" placeholder="18.5" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-500 font-bold text-sm">
                         </div>
                     </div>
 
-                    <button type="submit" class="w-full py-3.5 bg-rose-600 text-white font-bold rounded-2xl shadow-lg shadow-rose-100">体重データを登録</button>
+                    <button type="submit" class="w-full py-3.5 bg-rose-600 text-white font-bold rounded-2xl shadow-lg shadow-rose-100 text-sm">体重データを登録</button>
                 </form>
             </div>
         </div>
 
-        <!-- AI Personal Coach Message Modal -->
-        <div id="aiCoachModal" class="absolute inset-0 bg-black/60 z-50 flex items-center justify-center p-4 opacity-0 pointer-events-none transition-all duration-300">
-            <div class="bg-white rounded-[32px] p-6 max-w-sm w-full space-y-4 relative transform scale-95 transition-transform duration-300">
-                <button onclick="closeAICoach()" class="absolute top-4 right-4 p-1 bg-slate-100 rounded-full text-slate-500 hover:bg-slate-200">
-                    <i data-lucide="x" class="w-5 h-5"></i>
-                </button>
-                
-                <div class="flex items-center space-x-3 mb-2">
-                    <div class="p-3 bg-gradient-to-tr from-indigo-500 to-indigo-600 text-white rounded-2xl">
-                        <i data-lucide="brain-circuit" class="w-6 h-6"></i>
-                    </div>
-                    <div>
-                        <h4 class="font-black text-slate-800">AIボディコーチ</h4>
-                        <span class="text-[10px] bg-emerald-50 text-emerald-600 border border-emerald-100 px-2 py-0.5 rounded-full font-bold">分析完了</span>
-                    </div>
-                </div>
-
-                <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100 text-xs text-slate-600 leading-relaxed font-medium" id="aiCoachMessage">
-                    <!-- Dynamic prompt injected via JS -->
-                </div>
-
-                <button onclick="closeAICoach()" class="w-full py-3 bg-indigo-600 text-white text-sm font-bold rounded-2xl shadow-lg shadow-indigo-100 hover:bg-indigo-700 transition">
-                    コーチのアドバイスを実践する
-                </button>
-            </div>
-        </div>
-
+        <!-- Navigation bar -->
         <nav class="absolute bottom-0 left-0 right-0 bg-white/90 backdrop-blur-lg border-t border-slate-100 px-4 py-2 flex justify-around items-center text-slate-400 z-30 shrink-0">
             <button onclick="switchTab('dashboard')" id="nav-dashboard" class="flex flex-col items-center justify-center py-2 px-3 nav-active transition">
                 <i data-lucide="grid" class="w-5 h-5 mb-1"></i>
-                <span class="text-[10px] font-bold">ホーム</span>
+                <span class="text-[9px] font-bold">ホーム</span>
             </button>
             <button onclick="switchTab('analytics')" id="nav-analytics" class="flex flex-col items-center justify-center py-2 px-3 transition">
                 <i data-lucide="bar-chart-2" class="w-5 h-5 mb-1"></i>
-                <span class="text-[10px] font-bold">分析</span>
+                <span class="text-[9px] font-bold">分析</span>
             </button>
             <div class="w-10"></div> <!-- Spacer for FAB -->
             <button onclick="switchTab('history')" id="nav-history" class="flex flex-col items-center justify-center py-2 px-3 transition">
                 <i data-lucide="clipboard-list" class="w-5 h-5 mb-1"></i>
-                <span class="text-[10px] font-bold">履歴</span>
+                <span class="text-[9px] font-bold">履歴</span>
             </button>
             <button onclick="switchTab('profile')" id="nav-profile" class="flex flex-col items-center justify-center py-2 px-3 transition">
-                <i data-lucide="sliders" class="w-5 h-5 mb-1"></i>
-                <span class="text-[10px] font-bold">目標変更</span>
+                <i data-lucide="user" class="w-5 h-5 mb-1"></i>
+                <span class="text-[9px] font-bold">設定</span>
             </button>
         </nav>
 
-        <div id="toastMessage" class="absolute bottom-24 left-1/2 transform -translate-x-1/2 bg-slate-900 text-white px-4 py-2.5 rounded-2xl text-xs font-semibold shadow-lg opacity-0 transition-opacity duration-300 pointer-events-none z-50 flex items-center space-x-2">
+        <!-- System Toasts -->
+        <div id="toastMessage" class="absolute bottom-24 left-1/2 transform -translate-x-1/2 bg-slate-900 text-white px-4 py-2.5 rounded-2xl text-[11px] font-semibold shadow-lg opacity-0 transition-opacity duration-300 pointer-events-none z-50 flex items-center space-x-2">
             <i data-lucide="check" class="w-4 h-4 text-emerald-400"></i>
             <span id="toastText">記録を追加しました！</span>
         </div>
@@ -637,17 +645,15 @@
         // State engine setup
         let appState = {
             profile: null,
-            logs: []
+            logs: [],
+            aiPlan: null,            // Caches AI generated daily checklist
+            checkedTasks: {}         // Stores checklist statuses mapped by date ("YYYY-MM-DD" => [taskIds])
         };
 
-        // Storage keys
-        const STORAGE_KEY = 'gshape_body_make_state_v1';
-
-        // Custom chart instances
+        const STORAGE_KEY = 'gshape_body_make_state_v2';
         let weightChartInstance = null;
         let calorieChartInstance = null;
 
-        // On window startup
         window.onload = function() {
             lucide.createIcons();
             loadState();
@@ -657,17 +663,16 @@
             updateDashboard();
         };
 
-        // Keep the clock on status bar updated
         function setupClock() {
             const timeEl = document.getElementById('statusBarTime');
             const updateTime = () => {
                 const now = new Date();
                 const hrs = String(now.getHours()).padStart(2, '0');
                 const mins = String(now.getMinutes()).padStart(2, '0');
-                timeEl.textContent = `${hrs}:${mins}`;
+                if(timeEl) timeEl.textContent = `${hrs}:${mins}`;
             };
             updateTime();
-            setInterval(updateTime, 1000 * 60);
+            setInterval(updateTime, 60000);
         }
 
         function saveState() {
@@ -679,6 +684,8 @@
             if (saved) {
                 try {
                     appState = JSON.parse(saved);
+                    // Support backward compatibility for checkedTasks & aiPlan
+                    if (!appState.checkedTasks) appState.checkedTasks = {};
                 } catch(e) {
                     console.error('Error loading stored body metrics state', e);
                 }
@@ -693,17 +700,21 @@
                 document.getElementById('profileHeight').value = appState.profile.height;
                 document.getElementById('profileStartWeight').value = appState.profile.startWeight;
                 document.getElementById('profileTargetWeight').value = appState.profile.targetWeight;
+                document.getElementById('profileTargetDays').value = appState.profile.targetDays || 60;
                 document.getElementById('profileActivity').value = appState.profile.activityMultiplier;
                 calculateFormularyMetrics();
+                
+                // If there's no custom AI Plan cached, trigger a default or live creation
+                if (!appState.aiPlan) {
+                    triggerAICoachGeneration(false);
+                }
             }
         }
 
-        // Calculation algorithms
         function calculateTDEE(gender, age, weight, height, multiplier) {
-            // Harris-Benedict formulas for Basal Metabolic Rate (BMR)
             let bmr = 0;
             if (gender === 'male') {
-                bmr = 13.397 * weight + 4.799 * height - 5.677 * 28 + 88.362; // Assume average age 28 for default
+                bmr = 13.397 * weight + 4.799 * height - 5.677 * 28 + 88.362;
             } else {
                 bmr = 9.247 * weight + 3.098 * height - 4.33 * 28 + 447.593;
             }
@@ -718,18 +729,16 @@
             const targetWeight = profile.targetWeight;
             const currentWeight = profile.startWeight;
             
-            // If target weight is lower than current weight -> Deficit (減量)
-            // If target weight is higher than current weight -> Surplus (増量/バルクアップ)
             let dailyGoalCal = tdeeObj.tdee;
-            let targetProt = Math.round(currentWeight * 2); // 2g of protein per kg of bodyweight
-            let targetFat = Math.round((dailyGoalCal * 0.2) / 9); // 20% total fat
+            let targetProt = Math.round(currentWeight * 2); 
+            let targetFat = Math.round((dailyGoalCal * 0.2) / 9); 
             let targetCarb = 0;
 
             if (targetWeight < currentWeight) {
-                // Safe 15% Caloric deficit for healthy cutting
+                // Cutting: ~15% deficit
                 dailyGoalCal = Math.round(tdeeObj.tdee * 0.85);
             } else {
-                // Safe 10% Caloric surplus for lean bulking
+                // Bulking: ~10% surplus
                 dailyGoalCal = Math.round(tdeeObj.tdee * 1.1);
             }
 
@@ -747,7 +756,7 @@
 
         function setupEventListeners() {
             // Onboarding complete click
-            document.getElementById('startAppBtn').addEventListener('click', function() {
+            document.getElementById('startAppBtn').addEventListener('click', async function() {
                 const onboardingForm = document.getElementById('onboardingForm');
                 if (!onboardingForm.checkValidity()) {
                     onboardingForm.reportValidity();
@@ -758,6 +767,7 @@
                 const height = parseFloat(document.getElementById('setupHeight').value);
                 const currentWeight = parseFloat(document.getElementById('setupCurrentWeight').value);
                 const targetWeight = parseFloat(document.getElementById('setupTargetWeight').value);
+                const targetDays = parseInt(document.getElementById('setupTargetDays').value) || 60;
                 const activityMultiplier = parseFloat(document.getElementById('setupActivity').value);
 
                 appState.profile = {
@@ -765,18 +775,19 @@
                     height,
                     startWeight: currentWeight,
                     targetWeight,
+                    targetDays,
                     activityMultiplier,
                     createdAt: new Date().toISOString()
                 };
 
-                // Add initial weight log for initial trend mapping
+                // Add initial weight log
                 appState.logs.push({
                     id: 'init-' + Date.now(),
                     type: 'weight',
                     date: new Date().toISOString().split('T')[0],
                     weight: currentWeight,
                     fat: 0,
-                    note: 'セットアップ時測定'
+                    note: '初期測定値'
                 });
 
                 saveState();
@@ -786,33 +797,38 @@
                 document.getElementById('profileHeight').value = height;
                 document.getElementById('profileStartWeight').value = currentWeight;
                 document.getElementById('profileTargetWeight').value = targetWeight;
+                document.getElementById('profileTargetDays').value = targetDays;
                 document.getElementById('profileActivity').value = activityMultiplier;
 
                 calculateFormularyMetrics();
+                
+                // Trigger customized AI plan generation
+                await triggerAICoachGeneration(true);
                 updateDashboard();
-                showToast('ボディメイクプランを作成しました！');
+                showToast('逆算ボディメイクプランが作成されました！');
             });
 
             // Profile Edit Form Submit
-            document.getElementById('profileForm').addEventListener('submit', function(e) {
+            document.getElementById('profileForm').addEventListener('submit', async function(e) {
                 e.preventDefault();
                 appState.profile.height = parseFloat(document.getElementById('profileHeight').value);
                 appState.profile.startWeight = parseFloat(document.getElementById('profileStartWeight').value);
                 appState.profile.targetWeight = parseFloat(document.getElementById('profileTargetWeight').value);
+                appState.profile.targetDays = parseInt(document.getElementById('profileTargetDays').value) || 60;
                 appState.profile.activityMultiplier = parseFloat(document.getElementById('profileActivity').value);
 
                 saveState();
                 calculateFormularyMetrics();
+                await triggerAICoachGeneration(true);
                 updateDashboard();
-                showToast('設定を更新しました！');
+                showToast('設定とAI逆算プランを更新しました！');
                 switchTab('dashboard');
             });
 
-            // Dynamic Running Calorie Estimate feedback when values change
             document.getElementById('runDistance').addEventListener('input', calculateEstimatedRunBurn);
             document.getElementById('runDuration').addEventListener('input', calculateEstimatedRunBurn);
 
-            // Setup Custom Activity Logs Forms Submits
+            // Manual Submit Handlers
             document.getElementById('dietForm').addEventListener('submit', function(e) {
                 e.preventDefault();
                 const record = {
@@ -825,11 +841,7 @@
                     fat: parseInt(document.getElementById('dietFat').value),
                     carbs: parseInt(document.getElementById('dietCarb').value)
                 };
-                appState.logs.push(record);
-                saveState();
-                closeRecordModal();
-                updateDashboard();
-                showToast('食事を記録しました！');
+                addAndTrackLog(record);
             });
 
             document.getElementById('workoutForm').addEventListener('submit', function(e) {
@@ -845,18 +857,13 @@
                     reps: parseInt(document.getElementById('workoutReps').value),
                     sets: parseInt(document.getElementById('workoutSets').value)
                 };
-                appState.logs.push(record);
-                saveState();
-                closeRecordModal();
-                updateDashboard();
-                showToast('筋トレを記録しました！');
+                addAndTrackLog(record);
             });
 
             document.getElementById('runningForm').addEventListener('submit', function(e) {
                 e.preventDefault();
                 const dist = parseFloat(document.getElementById('runDistance').value);
                 const dur = parseInt(document.getElementById('runDuration').value);
-                // Simple burn estimator formula: Weight * dist (METS equivalent roughly)
                 const weight = getCurrentWeight();
                 const estBurn = Math.round(weight * dist);
 
@@ -868,11 +875,7 @@
                     duration: dur,
                     calories: estBurn
                 };
-                appState.logs.push(record);
-                saveState();
-                closeRecordModal();
-                updateDashboard();
-                showToast('ランニングを記録しました！');
+                addAndTrackLog(record);
             });
 
             document.getElementById('weightForm').addEventListener('submit', function(e) {
@@ -883,16 +886,12 @@
                     date: new Date().toISOString().split('T')[0],
                     weight: parseFloat(document.getElementById('logWeightVal').value),
                     fat: parseFloat(document.getElementById('logWeightFat').value) || 0,
-                    note: 'デイリー記録'
+                    note: '測定記録'
                 };
-                appState.logs.push(record);
-                saveState();
-                closeRecordModal();
-                updateDashboard();
-                showToast('体重を記録しました！');
+                addAndTrackLog(record);
             });
 
-            // FAB action overlay toggle
+            // FAB overlay triggers
             const fab = document.getElementById('fabBtn');
             const sheet = document.getElementById('fabSheet');
             const content = document.getElementById('fabSheetContent');
@@ -910,96 +909,363 @@
             });
         }
 
-        // Quick close triggers
+        function addAndTrackLog(record) {
+            appState.logs.push(record);
+            saveState();
+            closeRecordModal();
+            updateDashboard();
+            showToast('記録を登録しました！');
+        }
+
         function closeFAB() {
             const sheet = document.getElementById('fabSheet');
             const content = document.getElementById('fabSheetContent');
-            sheet.classList.add('pointer-events-none');
-            sheet.classList.remove('opacity-100');
-            content.classList.add('translate-y-full');
+            if(sheet && content) {
+                sheet.classList.add('pointer-events-none');
+                sheet.classList.remove('opacity-100');
+                content.classList.add('translate-y-full');
+            }
         }
 
         function calculateEstimatedRunBurn() {
             const dist = parseFloat(document.getElementById('runDistance').value) || 0;
             const weight = getCurrentWeight();
             const burn = Math.round(weight * dist);
-            
-            if (burn > 0) {
-                document.getElementById('estimatedRunCal').textContent = `${burn} kcal`;
-            } else {
-                document.getElementById('estimatedRunCal').textContent = `-- kcal`;
-            }
+            document.getElementById('estimatedRunCal').textContent = burn > 0 ? `${burn} kcal` : `-- kcal`;
         }
 
-        // Return latest entered weight or fallback to onboarding initial weight
         function getCurrentWeight() {
             const weightLogs = appState.logs.filter(l => l.type === 'weight');
             if (weightLogs.length > 0) {
-                // sort chronologically to find latest
                 weightLogs.sort((a,b) => new Date(b.date) - new Date(a.date));
                 return weightLogs[0].weight;
             }
             return appState.profile ? appState.profile.startWeight : 70;
         }
 
-        // Form templates presets to auto-fill for ease of use
-        function quickFillMeal(type) {
-            const presets = {
-                chicken: { name: '鶏胸肉(150g)と白米(200g)', cal: 480, prot: 40, fat: 4, carb: 72 },
-                protein: { name: 'マイプロテイン 1杯', cal: 120, prot: 24, fat: 1.5, carb: 3 },
-                salad: { name: 'コンビニ サラダチキン＆おにぎり2個', cal: 420, prot: 30, fat: 5, carb: 65 },
-                cheat: { name: 'ご褒美ピザ 2ピース', cal: 750, prot: 20, fat: 28, carb: 85 }
+        // Trigger live generation of specialized PFC, menu and backtracking structure
+        async function triggerAICoachGeneration(forceRegenerate = false) {
+            if (!appState.profile) return;
+            if (!forceRegenerate && appState.aiPlan) {
+                // Use cached plan
+                renderAIChecklist();
+                return;
+            }
+
+            // Show Loading state
+            document.getElementById('aiLoadingContainer').classList.remove('hidden');
+            document.getElementById('aiChecklistContainer').innerHTML = '';
+
+            const p = appState.profile;
+            const targetParams = calculateBodyGoals(p);
+            const wtChangeGoal = p.targetWeight - p.startWeight;
+            const days = p.targetDays || 60;
+            const direction = wtChangeGoal < 0 ? '減量' : '増量';
+
+            // Custom prompt built using context
+            const userPrompt = `
+                性別: ${p.gender === 'male' ? '男性' : '女性'}
+                身長: ${p.height}cm
+                現在体重: ${p.startWeight}kg
+                目標体重: ${p.targetWeight}kg
+                活動強度マルチプライヤー: ${p.activityMultiplier}
+                目標期間: ${days}日間で達成したい (${direction})
+                計算上の1日摂取目標: ${targetParams.calories} kcal
+                計算上の1日推奨PFC: P ${targetParams.protein}g, F ${targetParams.fat}g, C ${targetParams.carbs}g
+
+                上記基本情報を元に、1日の「食事メニュー(朝、昼、晩、間食の具体的提案)」と、日替わりで実行すべき「1日の運動メニュー(筋トレや有酸素、各々適正な負荷量)」を、目標達成期間から逆算した計画として作成してください。
+            `;
+
+            const systemPrompt = `
+                あなたはプロのAIボディメイクトレーナー兼管理栄養士です。
+                提示されたユーザー情報を分析し、目標期間内に安全・確実に理想の身体へ近づくための「1日のお手本プラン(食事 & トレーニング)」を構造化JSONデータで出力してください。
+                期間を考慮した逆算のアドバイスを100字程度で含めてください。
+                
+                【厳格なルール】
+                出力は必ず以下のJSONスキーマ形式に完全に一致するJSONテキストのみを返してください。マークダウンフェンス（\`\`\`json）などは含めず、純粋なJSON文字列としてください。
+                
+                スキーマ:
+                {
+                    "dailyCalories": 数値(推奨総摂取カロリー),
+                    "pfc": {
+                        "protein": 数値(推奨タンパク質g),
+                        "fat": 数値(推奨脂質g),
+                        "carbs": 数値(推奨炭水化物g)
+                    },
+                    "mealMenu": [
+                        {
+                            "id": "文字列(ユニークなID、例: meal-1, meal-2, meal-3, meal-4)",
+                            "time": "文字列(朝食, 昼食, 夕食, 間食 のいずれか)",
+                            "menu": "文字列(料理名と食材、例: 焼き鮭と玄米ご飯、卵焼き)",
+                            "calories": 数値(目安カロリー),
+                            "protein": 数値(P量g),
+                            "fat": 数値(F量g),
+                            "carbs": 数値(C量g)
+                        }
+                    ],
+                    "workoutMenu": [
+                        {
+                            "id": "文字列(ユニークなID、例: workout-1, workout-2)",
+                            "category": "文字列(筋トレ, 有酸素, ストレッチ などのカテゴリ)",
+                            "title": "文字列(種目名、例: 自重スクワット、30分ジョギング)",
+                            "volume": "文字列(回数やセット数・目安時間、例: 15回 × 3セット)",
+                            "calories": 数値(目安消費カロリー, 筋トレなら50など、ランニングなら200など想定値)"
+                        }
+                    ],
+                    "advice": "文字列(目標日数から逆算した、心強いモチベーション向上アドバイス。100文字程度。)"
+                }
+            `;
+
+            // Prepare API call payload
+            const apiKey = ""; // Canvas will replace this with valid key automatically
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
+
+            const payload = {
+                contents: [{ parts: [{ text: userPrompt }] }],
+                systemInstruction: { parts: [{ text: systemPrompt }] },
+                generationConfig: {
+                    responseMimeType: "application/json"
+                }
             };
 
-            const selected = presets[type];
-            if (selected) {
-                document.getElementById('dietName').value = selected.name;
-                document.getElementById('dietCal').value = selected.cal;
-                document.getElementById('dietProt').value = selected.prot;
-                document.getElementById('dietFat').value = selected.fat;
-                document.getElementById('dietCarb').value = selected.carb;
+            try {
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                
+                const result = await response.json();
+                const candidate = result.candidates?.[0];
+                if (candidate && candidate.content?.parts?.[0]?.text) {
+                    const rawJson = candidate.content.parts[0].text;
+                    appState.aiPlan = JSON.parse(rawJson);
+                    saveState();
+                } else {
+                    throw new Error('Invalid AI response structure');
+                }
+            } catch(e) {
+                console.warn('AI API Call failed or throttled. Applying static robust rule-based engine output...', e);
+                // Apply fallback generator
+                appState.aiPlan = generateFallbackAIPlan(wtChangeGoal, days, targetParams);
+                saveState();
+            } finally {
+                document.getElementById('aiLoadingContainer').classList.add('hidden');
+                renderAIChecklist();
+                updateDashboard();
             }
         }
 
-        function openRecordModal(category) {
-            closeFAB();
-            document.getElementById('recordModal').classList.remove('hidden');
-
-            // Hide all subforms first
-            document.getElementById('dietForm').classList.add('hidden');
-            document.getElementById('workoutForm').classList.add('hidden');
-            document.getElementById('runningForm').classList.add('hidden');
-            document.getElementById('weightForm').classList.add('hidden');
-
-            let title = '';
-            if (category === 'diet') {
-                title = '食事バランスの追加';
-                document.getElementById('dietForm').classList.remove('hidden');
-            } else if (category === 'workout') {
-                title = '筋トレ負荷の入力';
-                document.getElementById('workoutForm').classList.remove('hidden');
-            } else if (category === 'running') {
-                title = '有酸素運動(ラン)計測';
-                document.getElementById('runningForm').classList.remove('hidden');
-                calculateEstimatedRunBurn();
-            } else if (category === 'weight') {
-                title = '本日の体重・測定値';
-                document.getElementById('weightForm').classList.remove('hidden');
-                document.getElementById('logWeightVal').value = getCurrentWeight();
-            }
-
-            document.getElementById('modalTitle').textContent = title;
+        function generateFallbackAIPlan(wtChange, days, target) {
+            const isCut = wtChange < 0;
+            return {
+                dailyCalories: target.calories,
+                pfc: {
+                    protein: target.protein,
+                    fat: target.fat,
+                    carbs: target.carbs
+                },
+                mealMenu: [
+                    {
+                        id: "meal-1",
+                        time: "朝食",
+                        menu: isCut ? "納豆ごはん、ゆで卵、ほうれん草おひたし" : "全卵2個のオムレツ、白米200g、バナナ",
+                        calories: isCut ? 380 : 550,
+                        protein: isCut ? 20 : 30,
+                        fat: isCut ? 8 : 15,
+                        carbs: isCut ? 55 : 85
+                    },
+                    {
+                        id: "meal-2",
+                        time: "昼食",
+                        menu: isCut ? "皮なし鶏胸肉のグリル、ブロッコリー、玄米150g" : "豚ロース生姜焼き、白米250g、サラダ",
+                        calories: isCut ? 450 : 700,
+                        protein: isCut ? 38 : 35,
+                        fat: isCut ? 6 : 18,
+                        carbs: isCut ? 50 : 90
+                    },
+                    {
+                        id: "meal-3",
+                        time: "夕食",
+                        menu: isCut ? "たらときのこのホイル焼き、豆腐味噌汁、玄米100g" : "牛赤身ステーキ、温野菜、白米200g",
+                        calories: isCut ? 350 : 650,
+                        protein: isCut ? 30 : 40,
+                        fat: isCut ? 5 : 16,
+                        carbs: isCut ? 40 : 75
+                    },
+                    {
+                        id: "meal-4",
+                        time: "間食",
+                        menu: "ホエイプロテイン 1杯 (低脂肪牛乳または水割り)",
+                        calories: 140,
+                        protein: 25,
+                        fat: 2,
+                        carbs: 4
+                    }
+                ],
+                workoutMenu: [
+                    {
+                        id: "workout-1",
+                        category: "筋トレ",
+                        title: isCut ? "全身自重スクワット ＆ プッシュアップ" : "ダンベルベンチプレス ＆ スクワット",
+                        volume: isCut ? "20回 × 3セット" : "10回 × 3セット (やや重め)",
+                        calories: 60
+                    },
+                    {
+                        id: "workout-2",
+                        category: "有酸素",
+                        title: isCut ? "早歩きウォーキングまたは軽いジョギング" : "軽いランニングまたはサイクリング",
+                        volume: isCut ? "30分間" : "15分間",
+                        calories: isCut ? 180 : 100
+                    }
+                ],
+                advice: `${days}日間で目標の ${appState.profile.targetWeight}kg へ安全にアプローチする逆算計画です。タンパク質をキープし、規則的な運動日課を習慣化しましょう！`
+            };
         }
 
-        function closeRecordModal() {
-            document.getElementById('recordModal').classList.add('hidden');
+        function renderAIChecklist() {
+            const container = document.getElementById('aiChecklistContainer');
+            const progressBadge = document.getElementById('checklistProgressText');
+            const dashboardAdvice = document.getElementById('aiDashboardAdvice');
+            
+            if (!container || !appState.aiPlan) return;
+
+            container.innerHTML = '';
+            dashboardAdvice.textContent = appState.aiPlan.advice || "コツコツとメニューをクリアしていきましょう！";
+
+            const todayStr = new Date().toISOString().split('T')[0];
+            if (!appState.checkedTasks[todayStr]) {
+                appState.checkedTasks[todayStr] = [];
+            }
+            const checkedList = appState.checkedTasks[todayStr];
+
+            let totalTasks = 0;
+            let completedTasksCount = 0;
+
+            // Render Meal Checklist items
+            appState.aiPlan.mealMenu.forEach(meal => {
+                totalTasks++;
+                const isChecked = checkedList.includes(meal.id);
+                if (isChecked) completedTasksCount++;
+
+                const mealDiv = document.createElement('div');
+                mealDiv.className = `flex items-center justify-between p-3 rounded-2xl border transition-all ${isChecked ? 'bg-indigo-50/50 border-indigo-200' : 'bg-white border-slate-100'}`;
+                mealDiv.innerHTML = `
+                    <div class="flex items-center space-x-3 flex-1 min-w-0">
+                        <input type="checkbox" id="chk-${meal.id}" ${isChecked ? 'checked' : ''} onchange="toggleTask('${meal.id}', 'meal')" class="w-4 h-4 text-indigo-600 border-slate-300 rounded focus:ring-indigo-500">
+                        <div class="flex-1 min-w-0">
+                            <span class="text-[9px] bg-emerald-50 text-emerald-600 px-1.5 py-0.5 rounded-full font-bold inline-block mb-0.5">${meal.time} (${meal.calories}kcal)</span>
+                            <p class="text-xs font-bold text-slate-800 truncate">${meal.menu}</p>
+                            <p class="text-[9px] text-slate-400">P:${meal.protein}g F:${meal.fat}g C:${meal.carbs}g</p>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(mealDiv);
+            });
+
+            // Render Workout Checklist items
+            appState.aiPlan.workoutMenu.forEach(work => {
+                totalTasks++;
+                const isChecked = checkedList.includes(work.id);
+                if (isChecked) completedTasksCount++;
+
+                const workDiv = document.createElement('div');
+                workDiv.className = `flex items-center justify-between p-3 rounded-2xl border transition-all ${isChecked ? 'bg-indigo-50/50 border-indigo-200' : 'bg-white border-slate-100'}`;
+                workDiv.innerHTML = `
+                    <div class="flex items-center space-x-3 flex-1 min-w-0">
+                        <input type="checkbox" id="chk-${work.id}" ${isChecked ? 'checked' : ''} onchange="toggleTask('${work.id}', 'workout')" class="w-4 h-4 text-indigo-600 border-slate-300 rounded focus:ring-indigo-500">
+                        <div class="flex-1 min-w-0">
+                            <span class="text-[9px] bg-indigo-50 text-indigo-600 px-1.5 py-0.5 rounded-full font-bold inline-block mb-0.5">${work.category} (${work.volume})</span>
+                            <p class="text-xs font-bold text-slate-800 truncate">${work.title}</p>
+                            <p class="text-[9px] text-slate-400">消費目安: ${work.calories} kcal</p>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(workDiv);
+            });
+
+            progressBadge.textContent = `${completedTasksCount} / ${totalTasks} 完了`;
+        }
+
+        function toggleTask(taskId, type) {
+            const todayStr = new Date().toISOString().split('T')[0];
+            if (!appState.checkedTasks[todayStr]) {
+                appState.checkedTasks[todayStr] = [];
+            }
+
+            const list = appState.checkedTasks[todayStr];
+            const index = list.indexOf(taskId);
+
+            if (index === -1) {
+                // Check is being completed!
+                list.push(taskId);
+                
+                // Automatically inject dynamic food/workout log to today's database
+                if (type === 'meal') {
+                    const mealObj = appState.aiPlan.mealMenu.find(m => m.id === taskId);
+                    if (mealObj) {
+                        const logRecord = {
+                            id: `ai-meal-${taskId}-${Date.now()}`,
+                            linkedTaskId: taskId,
+                            type: 'diet',
+                            date: todayStr,
+                            title: `[AI推奨] ${mealObj.time}: ${mealObj.menu}`,
+                            calories: mealObj.calories,
+                            protein: mealObj.protein,
+                            fat: mealObj.fat,
+                            carbs: mealObj.carbs
+                        };
+                        appState.logs.push(logRecord);
+                    }
+                } else if (type === 'workout') {
+                    const workObj = appState.aiPlan.workoutMenu.find(w => w.id === taskId);
+                    if (workObj) {
+                        if (workObj.category === '筋トレ') {
+                            const logRecord = {
+                                id: `ai-work-${taskId}-${Date.now()}`,
+                                linkedTaskId: taskId,
+                                type: 'workout',
+                                date: todayStr,
+                                part: '全身',
+                                title: `[AI推奨] ${workObj.title}`,
+                                weight: 0,
+                                reps: 1,
+                                sets: 1
+                            };
+                            appState.logs.push(logRecord);
+                        } else {
+                            // Cardio running
+                            const logRecord = {
+                                id: `ai-work-${taskId}-${Date.now()}`,
+                                linkedTaskId: taskId,
+                                type: 'running',
+                                date: todayStr,
+                                distance: 2.5, // assumed default
+                                duration: 20,
+                                calories: workObj.calories
+                            };
+                            appState.logs.push(logRecord);
+                        }
+                    }
+                }
+                showToast('メニュー目標達成！自動記録されました！');
+            } else {
+                // Unchecked: remove from check tracking list
+                list.splice(index, 1);
+                
+                // Clean automatically generated log records so math updates cleanly
+                appState.logs = appState.logs.filter(l => l.linkedTaskId !== taskId || l.date !== todayStr);
+                showToast('タスクを未完了に戻し、関連ログを削除しました');
+            }
+
+            saveState();
+            updateDashboard();
         }
 
         function calculateFormularyMetrics() {
             if (!appState.profile) return;
             const metrics = calculateBodyGoals(appState.profile);
             
-            // Set labels in Profile Screen
             document.getElementById('profileBmrText').textContent = `${metrics.bmr} kcal`;
             document.getElementById('profileTdeeText').textContent = `${metrics.tdee} kcal`;
             document.getElementById('profileTargetCalText').textContent = `${metrics.calories} kcal`;
@@ -1018,14 +1284,11 @@
             return '肥満(重度)';
         }
 
-        // Refresh all dynamic widgets on the dashboard tab
         function updateDashboard() {
             if (!appState.profile) return;
 
             const targetParams = calculateBodyGoals(appState.profile);
             const todayStr = new Date().toISOString().split('T')[0];
-
-            // Filter today's specific logs
             const todayLogs = appState.logs.filter(l => l.date === todayStr);
 
             // 1. Calculate calorie progress
@@ -1046,7 +1309,6 @@
                 }
             });
 
-            // UI updates
             document.getElementById('dashTargetCal').textContent = targetParams.calories;
             document.getElementById('dashCurrentCal').textContent = currentCaloriesIn;
             document.getElementById('dashBurnedCal').textContent = currentBurned;
@@ -1056,14 +1318,13 @@
             document.getElementById('dashCalPercent').textContent = `${calPercentage}%`;
             document.getElementById('dashCalProgressBar').style.width = `${calPercentage}%`;
 
-            // Check if calorie balance is optimal
             if (currentCaloriesIn > targetParams.calories + 150) {
                 document.getElementById('dashCalProgressBar').className = 'bg-amber-500 h-full rounded-full transition-all duration-300';
             } else {
                 document.getElementById('dashCalProgressBar').className = 'bg-emerald-500 h-full rounded-full transition-all duration-300';
             }
 
-            // 2. PFC Progress meters
+            // PFC Progress meters
             document.getElementById('pfcProt').textContent = currentProt;
             document.getElementById('targetProt').textContent = targetParams.protein;
             const pPercent = Math.min(Math.round((currentProt / targetParams.protein) * 100), 100);
@@ -1079,36 +1340,28 @@
             const cPercent = Math.min(Math.round((currentCarb / targetParams.carbs) * 100), 100);
             document.getElementById('pfcCarbBar').style.width = `${cPercent}%`;
 
-            // 3. Activity Summary indicators
-            // Today's weight indicator
+            // Activity Summary indicators
             const todayWeightLog = todayLogs.find(l => l.type === 'weight');
-            if (todayWeightLog) {
-                document.getElementById('dashWeightVal').textContent = `${todayWeightLog.weight} kg`;
-            } else {
-                document.getElementById('dashWeightVal').textContent = '未記録 (追加する)';
-            }
+            document.getElementById('dashWeightVal').textContent = todayWeightLog ? `${todayWeightLog.weight} kg` : '未記録';
 
-            // Today's Workout Summary indicator
             const todayWorkouts = todayLogs.filter(l => l.type === 'workout');
             if (todayWorkouts.length > 0) {
                 const parts = todayWorkouts.map(w => w.part);
                 const uniqueParts = [...new Set(parts)];
-                document.getElementById('dashWorkoutVal').textContent = `実施部位: ${uniqueParts.join(', ')} (${todayWorkouts.length}種目)`;
+                document.getElementById('dashWorkoutVal').textContent = uniqueParts.join(', ');
             } else {
-                document.getElementById('dashWorkoutVal').textContent = '未記録 (追加する)';
+                document.getElementById('dashWorkoutVal').textContent = '未実施';
             }
 
-            // Today's Running Summary indicator
             const todayRuns = todayLogs.filter(l => l.type === 'running');
             if (todayRuns.length > 0) {
-                const totalDist = todayRuns.reduce((acc, r) => acc + r.distance, 0).toFixed(2);
-                document.getElementById('dashRunningVal').textContent = `走行完了: ${totalDist} km`;
+                const totalDist = todayRuns.reduce((acc, r) => acc + r.distance, 0).toFixed(1);
+                document.getElementById('dashRunningVal').textContent = `${totalDist} km`;
             } else {
-                document.getElementById('dashRunningVal').textContent = '未記録 (追加する)';
+                document.getElementById('dashRunningVal').textContent = '未実施';
             }
 
-            // 4. "Coolness Score" calculation (かっこいい体度スコア)
-            // Measures distance closed between start weight and current weight vs target weight
+            // "Coolness Score" calculation (かっこいい体度スコア)
             const initialWeight = appState.profile.startWeight;
             const currentWeight = getCurrentWeight();
             const targetWeight = appState.profile.targetWeight;
@@ -1129,26 +1382,42 @@
             document.getElementById('scoreTargetWeight').textContent = `${targetWeight.toFixed(1)} kg`;
             document.getElementById('scoreProgressBar').style.width = `${percentage}%`;
 
-            // Refresh historical logs visual layout list
+            // Days countdown rendering from profiling creation date
+            const createdDate = new Date(appState.profile.createdAt || new Date());
+            const daysPlanned = appState.profile.targetDays || 60;
+            const msPassed = Date.now() - createdDate.getTime();
+            const daysPassed = Math.floor(msPassed / (1000 * 60 * 60 * 24));
+            const daysLeft = Math.max(0, daysPlanned - daysPassed);
+            
+            document.getElementById('scoreDaysCount').textContent = `残り ${daysLeft}日 / ${daysPlanned}日`;
+            document.getElementById('headerDaysCountdown').textContent = `目標達成まで あと ${daysLeft}日`;
+
+            // Display Velocity (g/day)
+            const fatAdjustVelocity = Math.round((currentDiff * 1000) / (daysLeft || 1));
+            document.getElementById('scoreCalculatedVelocity').textContent = daysLeft > 0 
+                ? `目標達成には1日あたり平均 ${fatAdjustVelocity}g の増減（カロリー調整）が必要です` 
+                : '目標期日に達しました！設定から新しい期間に変更できます。';
+
+            renderAIChecklist();
             renderHistoryList();
         }
 
         function renderHistoryList() {
             const listContainer = document.getElementById('historyList');
+            if(!listContainer) return;
             listContainer.innerHTML = '';
 
             if (appState.logs.length === 0) {
                 listContainer.innerHTML = `
                     <div class="text-center py-12 text-slate-400">
-                        <i data-lucide="archive" class="w-12 h-12 mx-auto mb-2 opacity-30"></i>
-                        <p class="text-xs">ログ履歴がありません。日々の記録を追加しましょう！</p>
+                        <i data-lucide="archive" class="w-10 h-10 mx-auto mb-2 opacity-30"></i>
+                        <p class="text-xs">ログ履歴がありません。今日の日課にチェックを入れるか、手動追加をしましょう！</p>
                     </div>
                 `;
                 lucide.createIcons();
                 return;
             }
 
-            // Sort newest first
             const sortedLogs = [...appState.logs].sort((a,b) => b.id.localeCompare(a.id));
 
             sortedLogs.forEach(l => {
@@ -1165,17 +1434,17 @@
                 } else if (l.type === 'workout') {
                     icon = 'dumbbell';
                     iconBg = 'bg-indigo-50 text-indigo-600 border border-indigo-100';
-                    title = `${l.part}トレ - ${l.title}`;
-                    details = `${l.weight}kg x ${l.reps}レップス | ${l.sets}セット`;
+                    title = l.title;
+                    details = l.weight > 0 ? `${l.weight}kg x ${l.reps}レップス | ${l.sets}セット` : '筋トレ完了(自重またはAIタスク)';
                 } else if (l.type === 'running') {
                     icon = 'activity';
                     iconBg = 'bg-sky-50 text-sky-600 border border-sky-100';
-                    title = 'ランニング';
-                    details = `距離: ${l.distance}km | タイム: ${l.duration}分 | 消費: ${l.calories}kcal`;
+                    title = '有酸素運動・ランニング';
+                    details = `距離: ${l.distance}km | ${l.duration}分 | 消費: ${l.calories}kcal`;
                 } else if (l.type === 'weight') {
                     icon = 'scale';
                     iconBg = 'bg-rose-50 text-rose-600 border border-rose-100';
-                    title = `測定記録: ${l.weight}kg`;
+                    title = `測定体重: ${l.weight}kg`;
                     details = l.fat > 0 ? `体脂肪率: ${l.fat}%` : '体脂肪率は未入力';
                 }
 
@@ -1188,8 +1457,8 @@
                         </span>
                         <div>
                             <span class="text-[9px] text-slate-400 font-bold block">${l.date}</span>
-                            <h4 class="text-sm font-bold text-slate-800">${title}</h4>
-                            <p class="text-xs text-slate-500 font-medium">${details}</p>
+                            <h4 class="text-xs font-bold text-slate-800">${title}</h4>
+                            <p class="text-[10px] text-slate-500 font-medium">${details}</p>
                         </div>
                     </div>
                     <button onclick="deleteLog('${l.id}')" class="p-1.5 text-slate-300 hover:text-rose-500 rounded-full transition">
@@ -1203,6 +1472,15 @@
         }
 
         function deleteLog(id) {
+            // Find if this was linked to an AI task in the dashboard
+            const linkedLog = appState.logs.find(l => l.id === id);
+            if (linkedLog && linkedLog.linkedTaskId) {
+                const todayStr = linkedLog.date;
+                if (appState.checkedTasks[todayStr]) {
+                    appState.checkedTasks[todayStr] = appState.checkedTasks[todayStr].filter(tid => tid !== linkedLog.linkedTaskId);
+                }
+            }
+
             appState.logs = appState.logs.filter(l => l.id !== id);
             saveState();
             updateDashboard();
@@ -1210,77 +1488,113 @@
         }
 
         function clearAllData() {
-            if (confirm('すべての登録プロフィール、及び日々のボディメイク記録をリセットします。本当によろしいですか？')) {
+            if (confirm('すべてのプロフィール設定、及び蓄積された毎日のログ、AIメニューを完全にリセットします。よろしいですか？')) {
                 localStorage.removeItem(STORAGE_KEY);
-                appState = { profile: null, logs: [] };
+                appState = { profile: null, logs: [], aiPlan: null, checkedTasks: {} };
                 location.reload();
             }
         }
 
         function switchTab(tabId) {
-            // Hide all tab screens
             document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
-            
-            // Remove active classes on nav
             document.querySelectorAll('nav button').forEach(el => el.classList.remove('nav-active'));
 
-            // Show active tab
-            document.getElementById(`${tabId}Tab`).classList.remove('hidden');
+            const activeTab = document.getElementById(`${tabId}Tab`);
+            if (activeTab) activeTab.classList.remove('hidden');
             
-            // Match active state on nav item
             const activeBtn = document.getElementById(`nav-${tabId}`);
-            if (activeBtn) {
-                activeBtn.classList.add('nav-active');
-            }
+            if (activeBtn) activeBtn.classList.add('nav-active');
 
-            // Close FAB Sheet in case it is open
             closeFAB();
 
-            // Render specific analytics charts if relevant tab opened
             if (tabId === 'analytics') {
                 setTimeout(renderAnalyticsCharts, 100);
             }
         }
 
-        // Custom notification system (Native Toast alternative)
         function showToast(message) {
             const toast = document.getElementById('toastMessage');
             document.getElementById('toastText').textContent = message;
-            toast.className = 'absolute bottom-24 left-1/2 transform -translate-x-1/2 bg-slate-900 text-white px-4 py-2.5 rounded-2xl text-xs font-semibold shadow-lg opacity-100 transition-opacity duration-300 pointer-events-none z-50 flex items-center space-x-2';
+            toast.className = 'absolute bottom-24 left-1/2 transform -translate-x-1/2 bg-slate-900 text-white px-4 py-2.5 rounded-2xl text-[11px] font-semibold shadow-lg opacity-100 transition-opacity duration-300 pointer-events-none z-50 flex items-center space-x-2';
             
             setTimeout(() => {
-                toast.className = 'absolute bottom-24 left-1/2 transform -translate-x-1/2 bg-slate-900 text-white px-4 py-2.5 rounded-2xl text-xs font-semibold shadow-lg opacity-0 transition-opacity duration-300 pointer-events-none z-50 flex items-center space-x-2';
+                toast.className = 'absolute bottom-24 left-1/2 transform -translate-x-1/2 bg-slate-900 text-white px-4 py-2.5 rounded-2xl text-[11px] font-semibold shadow-lg opacity-0 transition-opacity duration-300 pointer-events-none z-50 flex items-center space-x-2';
             }, 2500);
+        }
+
+        function quickFillMeal(type) {
+            const presets = {
+                chicken: { name: '鶏胸肉(150g)と白米(200g)', cal: 480, prot: 40, fat: 4, carb: 72 },
+                protein: { name: 'プロテイン 1杯', cal: 120, prot: 24, fat: 1.5, carb: 3 },
+                salad: { name: 'サラダチキン＆おにぎり', cal: 420, prot: 30, fat: 5, carb: 65 }
+            };
+
+            const selected = presets[type];
+            if (selected) {
+                document.getElementById('dietName').value = selected.name;
+                document.getElementById('dietCal').value = selected.cal;
+                document.getElementById('dietProt').value = selected.prot;
+                document.getElementById('dietFat').value = selected.fat;
+                document.getElementById('dietCarb').value = selected.carb;
+            }
+        }
+
+        function openRecordModal(category) {
+            closeFAB();
+            document.getElementById('recordModal').classList.remove('hidden');
+
+            document.getElementById('dietForm').classList.add('hidden');
+            document.getElementById('workoutForm').classList.add('hidden');
+            document.getElementById('runningForm').classList.add('hidden');
+            document.getElementById('weightForm').classList.add('hidden');
+
+            let title = '';
+            if (category === 'diet') {
+                title = '食事記録を追加';
+                document.getElementById('dietForm').classList.remove('hidden');
+            } else if (category === 'workout') {
+                title = '筋トレ負荷を入力';
+                document.getElementById('workoutForm').classList.remove('hidden');
+            } else if (category === 'running') {
+                title = 'ランニング計測';
+                document.getElementById('runningForm').classList.remove('hidden');
+                calculateEstimatedRunBurn();
+            } else if (category === 'weight') {
+                title = '体重測定値の入力';
+                document.getElementById('weightForm').classList.remove('hidden');
+                document.getElementById('logWeightVal').value = getCurrentWeight();
+            }
+
+            document.getElementById('modalTitle').textContent = title;
+        }
+
+        function closeRecordModal() {
+            document.getElementById('recordModal').classList.add('hidden');
         }
 
         function renderAnalyticsCharts() {
             if (!appState.profile) return;
 
-            // Sort weight data logically
             const weightLogs = appState.logs.filter(l => l.type === 'weight')
                                            .sort((a,b) => a.date.localeCompare(b.date));
 
-            // Setup default datasets in case of empty tracking values
             let labels = [];
             let weightData = [];
             let targetLineData = [];
 
             if (weightLogs.length === 0) {
-                // Dummy values to outline UI preview initially
                 labels = ['開始日', '現在'];
                 weightData = [appState.profile.startWeight, appState.profile.startWeight];
                 targetLineData = [appState.profile.targetWeight, appState.profile.targetWeight];
             } else {
-                labels = weightLogs.map(l => l.date.substring(5)); // Show MM-DD format
+                labels = weightLogs.map(l => l.date.substring(5)); 
                 weightData = weightLogs.map(l => l.weight);
                 targetLineData = Array(labels.length).fill(appState.profile.targetWeight);
             }
 
-            // 1. Weight progression Trend Line chart
+            // Line chart
             const ctxWeight = document.getElementById('weightChart').getContext('2d');
-            if (weightChartInstance) {
-                weightChartInstance.destroy();
-            }
+            if (weightChartInstance) weightChartInstance.destroy();
 
             weightChartInstance = new Chart(ctxWeight, {
                 type: 'line',
@@ -1294,8 +1608,8 @@
                             backgroundColor: 'rgba(99, 102, 241, 0.05)',
                             tension: 0.3,
                             fill: true,
-                            pointRadius: 5,
-                            borderWidth: 3
+                            pointRadius: 4,
+                            borderWidth: 2.5
                         },
                         {
                             label: '目標体重',
@@ -1312,32 +1626,17 @@
                     responsive: true,
                     maintainAspectRatio: false,
                     plugins: {
-                        legend: {
-                            display: true,
-                            position: 'top',
-                            labels: {
-                                font: { size: 10, family: 'Inter' }
-                            }
-                        }
+                        legend: { display: true, labels: { font: { size: 9, family: 'Inter' } } }
                     },
                     scales: {
-                        y: {
-                            grid: { color: '#f1f5f9' },
-                            ticks: { font: { size: 10, family: 'Inter' } }
-                        },
-                        x: {
-                            grid: { display: false },
-                            ticks: { font: { size: 10, family: 'Inter' } }
-                        }
+                        y: { ticks: { font: { size: 9, family: 'Inter' } } },
+                        x: { grid: { display: false }, ticks: { font: { size: 9, family: 'Inter' } } }
                     }
                 }
             });
 
-            // 2. Dynamic Calorie Balance (Past 7 days) Bar Chart
+            // Calorie balance bar chart (past 7 days)
             const calorieLogs = appState.logs.filter(l => l.type === 'diet' || l.type === 'running');
-            const targetParams = calculateBodyGoals(appState.profile);
-
-            // Fetch dates for past 7 days sequentially
             const past7Days = [];
             for (let i = 6; i >= 0; i--) {
                 const d = new Date();
@@ -1363,26 +1662,24 @@
             });
 
             const ctxCalorie = document.getElementById('calorieChart').getContext('2d');
-            if (calorieChartInstance) {
-                calorieChartInstance.destroy();
-            }
+            if (calorieChartInstance) calorieChartInstance.destroy();
 
             calorieChartInstance = new Chart(ctxCalorie, {
                 type: 'bar',
                 data: {
-                    labels: past7Days.map(d => d.substring(5)), // MM-DD formatted
+                    labels: past7Days.map(d => d.substring(5)),
                     datasets: [
                         {
-                            label: '摂取カロリー (食事)',
+                            label: '摂取 (食事)',
                             data: dayInCalories,
                             backgroundColor: 'rgba(16, 185, 129, 0.85)',
-                            borderRadius: 6
+                            borderRadius: 4
                         },
                         {
-                            label: '消費カロリー (運動)',
+                            label: '消費 (有酸素)',
                             data: dayOutCalories,
                             backgroundColor: 'rgba(244, 63, 94, 0.85)',
-                            borderRadius: 6
+                            borderRadius: 4
                         }
                     ]
                 },
@@ -1390,72 +1687,14 @@
                     responsive: true,
                     maintainAspectRatio: false,
                     plugins: {
-                        legend: {
-                            display: true,
-                            position: 'top',
-                            labels: { font: { size: 10, family: 'Inter' } }
-                        }
+                        legend: { display: true, labels: { font: { size: 9, family: 'Inter' } } }
                     },
                     scales: {
-                        y: {
-                            stacked: false,
-                            grid: { color: '#f1f5f9' },
-                            ticks: { font: { size: 10, family: 'Inter' } }
-                        },
-                        x: {
-                            stacked: false,
-                            grid: { display: false },
-                            ticks: { font: { size: 10, family: 'Inter' } }
-                        }
+                        y: { ticks: { font: { size: 9, family: 'Inter' } } },
+                        x: { grid: { display: false }, ticks: { font: { size: 9, family: 'Inter' } } }
                     }
                 }
             });
-        }
-
-        function showAICoach() {
-            if (!appState.profile) return;
-
-            const targetParams = calculateBodyGoals(appState.profile);
-            const currentWeight = getCurrentWeight();
-            const targetWeight = appState.profile.targetWeight;
-            const diff = Math.abs(currentWeight - targetWeight);
-
-            let coachAdvice = '';
-            
-            // Build dynamic personal insights based on inputs and logs
-            if (targetWeight < appState.profile.startWeight) {
-                // Cutting Plan
-                coachAdvice = `
-                    💪 **現在、減量カットフェーズですね！**<br><br>
-                    現在の体重は **${currentWeight.toFixed(1)}kg** です。目標の **${targetWeight.toFixed(1)}kg** まで残り **${diff.toFixed(1)}kg** です。<br><br>
-                    1日の目標摂取カロリーは **${targetParams.calories} kcal**、タンパク質は **${targetParams.protein}g** をしっかりキープしましょう。<br><br>
-                    **【本日の一言アドバイス】**<br>
-                    かっこいい身体を作る最大の秘訣は、減量期に筋肉を落とさないこと。有酸素だけでなく、週3回は重めのスクワットやプレス系種目で筋肉に刺激を与えましょう！
-                `;
-            } else {
-                // Bulking Plan
-                coachAdvice = `
-                    🔥 **現在、筋肥大バルクアップフェーズですね！**<br><br>
-                    現在の体重は **${currentWeight.toFixed(1)}kg** です。目標の **${targetWeight.toFixed(1)}kg** まで残り **${diff.toFixed(1)}kg** です。<br><br>
-                    筋肉を増やしてかっこいいアウトラインを作るため、1日 **${targetParams.calories} kcal** のエネルギーをしっかり充填しましょう。<br><br>
-                    **【本日の一言アドバイス】**<br>
-                    余剰カロリーは十分な筋肥大をサポートします。トレーニング前後には速やかに吸収される「糖質（炭水化物）＋プロテイン」を組み合わせると効果が最大化します！
-                `;
-            }
-
-            document.getElementById('aiCoachMessage').innerHTML = coachAdvice;
-
-            const modal = document.getElementById('aiCoachModal');
-            modal.classList.remove('pointer-events-none');
-            modal.className = 'absolute inset-0 bg-black/60 z-50 flex items-center justify-center p-4 opacity-100 transition-all duration-300';
-            modal.querySelector('.transform').classList.remove('scale-95');
-        }
-
-        function closeAICoach() {
-            const modal = document.getElementById('aiCoachModal');
-            modal.classList.add('pointer-events-none');
-            modal.className = 'absolute inset-0 bg-black/60 z-50 flex items-center justify-center p-4 opacity-0 transition-all duration-300 pointer-events-none';
-            modal.querySelector('.transform').classList.add('scale-95');
         }
     </script>
 </body>
